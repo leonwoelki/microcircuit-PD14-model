@@ -41,19 +41,22 @@ file, the computed fields are automatically updated.
 
 ####################################
 
-from ruamel.yaml import YAML
-import numpy as np
+from pathlib import Path
 from typing import Self
 
-from pydantic import BaseModel, Field, computed_field
+import numpy as np
 import rich
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+from ruamel.yaml import YAML
 
 import microcircuit.helpers as helpers
 
 
-################################################################################
 class Parameters(BaseModel):
-
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+    )
     #########################################################################
     ## primary parameters
 
@@ -111,7 +114,8 @@ class Parameters(BaseModel):
             [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],
             [0.0364, 0.001, 0.0034, 0.0005, 0.0277, 0.008, 0.0658, 0.1443],
         ],
-        description=r"Connection probabilities for each pair of pre- and postsynaptic populations $x$ and $y$ (first index: target; second index: source)",
+        description=r"Connection probabilities for each pair of pre- and postsynaptic "
+        r"populations $x$ and $y$ (first index: target; second index: source)",
         json_schema_extra={
             "unit": "",
             "latex": r"$C_{yx}$",
@@ -382,7 +386,7 @@ class Parameters(BaseModel):
             "section": r"stimulus",
         },
     )
-
+    # stimulus parameters
     thalamic_input: bool = Field(
         default=False,
         description=r"Turn (transient) thalamic input on ('True) or off ('False'; default).",
@@ -476,12 +480,12 @@ class Parameters(BaseModel):
         },
     )
 
-    dc_input: bool = Field(
+    dc_transient: bool = Field(
         default=False,
         description=r"Turn (transient) DC input on ('True) or off ('False'; default).",
         json_schema_extra={
             "unit": "",
-            "latex": r"dc\_input",
+            "latex": r"dc\_transient",
             "section": r"stimulus",
         },
     )
@@ -559,10 +563,12 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: make sure that the current working directory is appended when setting derived parameters; "data_path": os.path.join(os.getcwd(), "data/")
     data_path: str = Field(
-        default="data/",
-        description=r"Path for storage of simulation data and metadata.",
+        default=Path("data"),
+        description=(
+            "Path for storage of simulation data and metadata."
+            "Relative paths are resolved against the current working directory."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"data\_path",
@@ -620,7 +626,7 @@ class Parameters(BaseModel):
         },
     )
 
-    store_meta_data: bool = Field(
+    store_metadata: bool = Field(
         default=True,
         description=r"If 'True' (default), metadata (parameter values, node IDs, and software requirements) will be stored together with the simulation data. ",
         json_schema_extra={
@@ -1019,9 +1025,9 @@ def test_parameter_loading(filename) -> None:
 
     test_params = load_parameters_from_yaml(filename)
 
-    assert (
-        params == test_params
-    ), "Validation failed: Loaded parameters do not match the original defaults."
+    assert params == test_params, (
+        "Validation failed: Loaded parameters do not match the original defaults."
+    )
 
 
 #########################################################################
