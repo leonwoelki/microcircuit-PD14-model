@@ -42,7 +42,7 @@ file, the computed fields are automatically updated.
 ####################################
 
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 import numpy as np
 import rich
@@ -525,6 +525,7 @@ class Parameters(BaseModel):
 
     t_presim: float = Field(
         default=500.0,
+        ge=0,  # greater than or equal to 0
         description=r"Duration of presimulation (warmup).",
         json_schema_extra={
             "unit": "ms",
@@ -535,6 +536,7 @@ class Parameters(BaseModel):
 
     t_sim: float = Field(
         default=1000.0,
+        ge=0,
         description=r"Duration of (main) simulation.",
         json_schema_extra={
             "unit": "ms",
@@ -545,6 +547,7 @@ class Parameters(BaseModel):
 
     sim_resolution: float = Field(
         default=0.1,
+        gt=0,  # greater than 0
         description=r"Simulation time resolution.",
         json_schema_extra={
             "unit": "ms",
@@ -553,9 +556,11 @@ class Parameters(BaseModel):
         },
     )
 
-    rec_dev: list = Field(
-        default=["spike_recorder"],
-        description=r"List of recording devices ('spike_recorder' [default] and/or 'voltmeter'). Nothing will be recorded if an empty list is given.",
+    rec_dev: list[Literal["spike_recorder", "voltmeter"]] = Field(
+        # Literal rejects unsupported device names; the factory creates a fresh list.
+        default_factory=lambda: ["spike_recorder"],
+        description=r"List of recording devices ('spike_recorder' [default] and/or 'voltmeter'). "
+        r"Nothing will be recorded if an empty list is given.",
         json_schema_extra={
             "unit": "",
             "latex": r"rec\_dev",
@@ -563,10 +568,10 @@ class Parameters(BaseModel):
         },
     )
 
-    data_path: str = Field(
+    data_path: Path = Field(
         default=Path("data"),
         description=(
-            "Path for storage of simulation data and metadata."
+            "Path for storage of simulation data and metadata. "
             "Relative paths are resolved against the current working directory."
         ),
         json_schema_extra={
@@ -578,7 +583,11 @@ class Parameters(BaseModel):
 
     rng_seed: int = Field(
         default=55,
-        description=r"Seed for NEST random number generator (used for connectivity, initial conditions, and Poissonian spike input).",
+        gt=0,
+        description=(
+            "Seed for NEST random number generator "
+            "(used for connectivity, initial conditions, and Poissonian spike input)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"rng\_seed",
@@ -588,7 +597,14 @@ class Parameters(BaseModel):
 
     local_num_threads: int = Field(
         default=4,
-        description=r"Number of threads per MPI process. Note: when up-scaling the network, the model may not run correctly if there are < 4 virtual processes (i.e, a thread in an MPI process). If there are 4 or more MPI processes, this value can be set to 1.",
+        ge=1,
+        description=(
+            "Number of threads per MPI process. "
+            "Note: when up-scaling the network, "
+            "the model may not run correctly if there are < 4 virtual processes "
+            "(i.e, a thread in an MPI process)."
+            " If there are 4 or more MPI processes, this value can be set to 1."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"local\_num\_threads",
@@ -598,6 +614,7 @@ class Parameters(BaseModel):
 
     rec_V_int: float = Field(
         default=1.0,
+        gt=0,
         description=r"Time resolution of membrane potential recordings.",
         json_schema_extra={
             "unit": "ms",
@@ -631,7 +648,7 @@ class Parameters(BaseModel):
         description=r"If 'True' (default), metadata (parameter values, node IDs, and software requirements) will be stored together with the simulation data. ",
         json_schema_extra={
             "unit": "",
-            "latex": r"store\_meta\_data",
+            "latex": r"store\_metadata",
             "section": r"simulation",
         },
     )
