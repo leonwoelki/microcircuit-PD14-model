@@ -81,7 +81,7 @@ class Model:
         # self.stim_dict = stim_dict
 
         # data directory
-        # self.data_path = sim_dict["data_path"]
+        # self.data_path = sim_dict['data_paht']
 
         # self.data_path = P.data_path
 
@@ -157,7 +157,7 @@ class Model:
 
 ####################################################################
 
-Storing simulation metadata to {self.sim_dict['data_path']}
+Storing simulation metadata to {self.sim_dict["data_paht"]}
 
 ####################################################################
 
@@ -165,13 +165,13 @@ Storing simulation metadata to {self.sim_dict['data_path']}
 
             ### parameters
             helpers.dict2json(
-                self.sim_dict, self.sim_dict["data_path"] + "/" + "sim_dict.json"
+                self.sim_dict, self.sim_dict["data_paht"] + "/" + "sim_dict.json"
             )
             helpers.dict2json(
-                self.stim_dict, self.sim_dict["data_path"] + "/" + "stim_dict.json"
+                self.stim_dict, self.sim_dict["data_paht"] + "/" + "stim_dict.json"
             )
             helpers.dict2json(
-                self.net_dict, self.sim_dict["data_path"] + "/" + "net_dict.json"
+                self.net_dict, self.sim_dict["data_paht"] + "/" + "net_dict.json"
             )
 
             ### nodes (populations, readout neurons, recording/stimulus devices)
@@ -184,12 +184,12 @@ Storing simulation metadata to {self.sim_dict['data_path']}
                 pop_name = self.net_dict["populations"][i]
                 nodes[f"spike_recorder_{pop_name}"] = spike_recorder.tolist()
 
-            helpers.dict2json(nodes, self.sim_dict["data_path"] + "/" + "nodes.json")
+            helpers.dict2json(nodes, self.sim_dict["data_paht"] + "/" + "nodes.json")
 
             ### python packages and versions
             os.system(
                 "pip freeze > requirements.txt; mv requirements.txt %s"
-                % self.sim_dict["data_path"]
+                % self.sim_dict["data_paht"]
             )
 
             ### store system metadata
@@ -349,7 +349,7 @@ Storing simulation metadata to {self.sim_dict['data_path']}
                 self.stim_dict["num_th_neurons"],
                 self.net_dict["full_num_neurons"],
             )[0]
-            self.weight_th = self.stim_dict["PSP_th"] * PSC_over_PSP
+            self.weight_th = self.P.PSP_exc_mean * PSC_over_PSP
             if self.net_dict["K_scaling"] != 1:
                 num_th_synapses *= self.net_dict["K_scaling"]
                 self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
@@ -548,7 +548,6 @@ Storing simulation metadata to {self.sim_dict['data_path']}
 
         for i, target_pop in enumerate(self.pops):
             for j, source_pop in enumerate(self.pops):
-
                 ## this case distinction would not have been necessary if nest.random.normal(mean,std) permitted std=0
                 if self.net_dict["delay_rel_std"] == 0:
                     delay = self.net_dict["delay_matrix_mean"][i][j]
@@ -658,11 +657,8 @@ Storing simulation metadata to {self.sim_dict['data_path']}
                 ),
                 "delay": nest.math.redraw(
                     nest.random.normal(
-                        mean=self.stim_dict["delay_th_mean"],
-                        std=(
-                            self.stim_dict["delay_th_mean"]
-                            * self.stim_dict["delay_th_rel_std"]
-                        ),
+                        mean=self.P.delay_exc_mean,
+                        std=self.P.delay_exc_mean * self.P.delay_rel_std,
                     ),
                     # resulting minimum delay is equal to resolution, see:
                     # https://nest-simulator.readthedocs.io/en/latest/nest_behavior

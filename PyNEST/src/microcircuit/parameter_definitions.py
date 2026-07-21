@@ -42,7 +42,7 @@ file, the computed fields are automatically updated.
 ####################################
 
 from pathlib import Path
-from typing import Literal, Self
+from typing import Annotated, ClassVar, Literal
 
 import numpy as np
 import rich
@@ -56,6 +56,17 @@ class Parameters(BaseModel):
     model_config = ConfigDict(
         validate_assignment=True,
         extra="forbid",
+    )
+
+    populations: ClassVar[tuple[str, ...]] = (
+        "L23E",
+        "L23I",
+        "L4E",
+        "L4I",
+        "L5E",
+        "L5I",
+        "L6E",
+        "L6I",
     )
     #########################################################################
     ## primary parameters
@@ -80,17 +91,6 @@ class Parameters(BaseModel):
         default=1.0,
         description=r"Scaling factor determining synapse numbers.",
         json_schema_extra={"unit": "", "latex": r"$\alpha_K$", "section": r"network"},
-    )
-
-    ## TODO: This is not a parameter. Remove it here.
-    populations: list = Field(
-        default=["L23E", "L23I", "L4E", "L4I", "L5E", "L5I", "L6E", "L6I"],
-        description=r"Populations.",
-        json_schema_extra={
-            "unit": "",
-            "latex": r"$x$",
-            "section": r"network",
-        },
     )
 
     full_num_neurons: list = Field(
@@ -399,6 +399,7 @@ class Parameters(BaseModel):
 
     th_start: float = Field(
         default=700.0,
+        ge=0,
         description=r"Onset time of thalamic input.",
         json_schema_extra={
             "unit": "ms",
@@ -409,6 +410,7 @@ class Parameters(BaseModel):
 
     th_duration: float = Field(
         default=10.0,
+        gt=0,
         description=r"Duration of thalamo-cortical input.",
         json_schema_extra={
             "unit": "ms",
@@ -419,6 +421,7 @@ class Parameters(BaseModel):
 
     th_rate: float = Field(
         default=120.0,
+        ge=0,
         description=r"Rate of thalamo-cortical input.",
         json_schema_extra={
             "unit": "spikes/s",
@@ -429,6 +432,7 @@ class Parameters(BaseModel):
 
     num_th_neurons: int = Field(
         default=902,
+        gt=0,
         description=r"Number of thalamic neurons.",
         json_schema_extra={
             "unit": "",
@@ -437,45 +441,14 @@ class Parameters(BaseModel):
         },
     )
 
-    conn_probs_th: list = Field(
+    conn_probs_th: list[Annotated[float, Field(ge=0.0, le=1.0)]] = Field(
         default=[0.0, 0.0, 0.0983, 0.0619, 0.0, 0.0, 0.0512, 0.0196],
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Probabilities of connections from the thalamus to each cortical populations $y$ (same order as in `populations`).",
         json_schema_extra={
             "unit": "",
             "latex": r"$C_{y,\mathcal{T}}$",
-            "section": r"stimulus",
-        },
-    )
-
-    ## TODO: in the model description, this is not a separate parameter, but identical to $J$; check model code
-    PSP_th: float = Field(
-        default=0.15,
-        description=r"Mean weight of thalamo-cortical inputs (PSP amplitude).",
-        json_schema_extra={
-            "unit": "mV",
-            "latex": r"$J_\text{TC}$",
-            "section": r"stimulus",
-        },
-    )
-
-    ## TODO: in the model description, this is not a separate parameter, but identical to $d_E$; check model code
-    delay_th_mean: float = Field(
-        default=1.5,
-        description=r"Mean spike transmission delay of thalamo-cortical inputs.",
-        json_schema_extra={
-            "unit": "ms",
-            "latex": r"$\bar{d}_\text{TC}$",
-            "section": r"stimulus",
-        },
-    )
-
-    ## TODO: in the model description, this is not a separate parameter, but identical to $CV_d$; check model code
-    delay_th_rel_std: float = Field(
-        default=0.5,
-        description=r"Coefficient of variation of thalamo-cortical spike transmission delays (ratio between standard deviation and mean of thalamic delay distribution).",
-        json_schema_extra={
-            "unit": "",
-            "latex": r"$\text{CV}_\text{d,TC}$",
             "section": r"stimulus",
         },
     )
@@ -492,6 +465,7 @@ class Parameters(BaseModel):
 
     dc_transient_start: float = Field(
         default=650.0,
+        ge=0,
         description=r"Onset time of transient DC input.",
         json_schema_extra={
             "unit": "ms",
@@ -502,6 +476,7 @@ class Parameters(BaseModel):
 
     dc_transient_dur: float = Field(
         default=100.0,
+        gt=0,
         description=r"Duration of transient DC input.",
         json_schema_extra={
             "unit": "ms",
@@ -832,7 +807,7 @@ class Parameters(BaseModel):
     #         self.stim_dict["num_th_neurons"],
     #         self.net_dict["full_num_neurons"],
     #     )[0]
-    #     self.weight_th = self.stim_dict["PSP_th"] * PSC_over_PSP
+    #     self.weight_th = self.PSP_exc_mean * PSC_over_PSP
     #     if self.net_dict["K_scaling"] != 1:
     #         num_th_synapses *= self.net_dict["K_scaling"]
     #         self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
