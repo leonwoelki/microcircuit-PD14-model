@@ -333,8 +333,10 @@ class Parameters(BaseModel):
 
     ###################################
     ## stimulus parameters
-    full_mean_rates: list = Field(
+    full_mean_rates: list[Annotated[float, Field(ge=0.0)]] = Field(
         default=[0.903, 2.965, 4.414, 5.876, 7.569, 8.633, 1.105, 7.829],
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Mean firing rates of the different populations $x$ in the non-scaled version of the microcircuit (same order as in `populations`; required for network scaling).",
         json_schema_extra={
             "unit": "spikes/s",
@@ -343,8 +345,7 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: rename variable into `CC_type`
-    bg_input_type: str = Field(
+    CC_type: Literal["poisson", "dc"] = Field(
         default="dc",
         description=r"Type of cortico-cortical input ('poisson' or 'dc').",
         json_schema_extra={
@@ -354,9 +355,10 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: rename variable into `K_CC_full`
-    K_ext: list = Field(
+    K_CC_full: list[Annotated[float, Field(ge=0.0)]] = Field(
         default=[1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100],
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Number of cortico-cortical inputs per neuron (in-degree) in the full-scalenework for each cortical population $y$ (same order as in `populations`).",
         json_schema_extra={
             "unit": "",
@@ -368,6 +370,7 @@ class Parameters(BaseModel):
     ## TODO: rename variable into `rate_CC`
     bg_rate: float = Field(
         default=8.0,
+        ge=0,
         description=r"Rate of cortico-cortical inputs.",
         json_schema_extra={
             "unit": "spikes/s",
@@ -376,8 +379,8 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: rename variable into `delay_CC`
-    delay_poisson: float = Field(
+    delay_CC: float = Field(
+        ge=0,
         default=1.5,
         description=r"Spike transmission delay of cortico-cortical inputs.",
         json_schema_extra={
@@ -487,7 +490,7 @@ class Parameters(BaseModel):
 
     dc_transient_amp: float = Field(
         default=0.3,
-        description=r"Amplitude of transient DC input (final amplitude is population-specific and will be obtained by multiplication with 'K_ext').",
+        description=r"Amplitude of transient DC input (final amplitude is population-specific and will be obtained by multiplication with 'K_CC_full').",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_\text{DC}$",
@@ -707,7 +710,7 @@ class Parameters(BaseModel):
     )
     @property
     def ext_indegrees(self) -> list:
-        return np.round(np.array(self.K_ext) * self.K_scaling).astype(int)
+        return np.round(np.array(self.K_CC_full) * self.K_scaling).astype(int)
 
     @computed_field(
         description=r"Unit PSP amplitude (ratio between PSP and PSC amplitude; conversion factor for synaptic weights).",
@@ -748,15 +751,15 @@ class Parameters(BaseModel):
         return self.PSP_exc_mean / self.J_unit
 
     # # DC input compensates for potentially missing Poisson input
-    # if self.net_dict["bg_input_type"] == "poisson":
+    # if self.net_dict["CC_type"] == "poisson":
     #     DC_amp = np.zeros(self.num_pops)
     # # else:
-    # elif self.net_dict["bg_input_type"] == "dc":
+    # elif self.net_dict["CC_type"] == "dc":
     #     # if nest.Rank() == 0: # default case should not raise a warning
     #     # warnings.warn("DC input created to compensate missing Poisson input.\n")
     #     DC_amp = helpers.dc_input_compensating_poisson(
     #         self.net_dict["bg_rate"],
-    #         self.net_dict["K_ext"],
+    #         self.net_dict["K_CC_full"],
     #         self.net_dict["neuron_params"]["tau_syn"],
     #         PSC_ext,
     #     )
@@ -773,14 +776,14 @@ class Parameters(BaseModel):
     #             self.net_dict["neuron_params"]["tau_syn"],
     #             self.net_dict["full_mean_rates"],
     #             DC_amp,
-    #             self.net_dict["bg_input_type"],
+    #             self.net_dict["CC_type"],
     #             self.net_dict["bg_rate"],
-    #             self.net_dict["K_ext"],
+    #             self.net_dict["K_CC_full"],
     #         )
     #     )
 
     #     # check if all populations are supra-threshold with the changed DC input
-    #     if self.net_dict["bg_input_type"] == "dc":
+    #     if self.net_dict["CC_type"] == "dc":
     #         I_rh = helpers.compute_rheo_base_current(
     #             self.net_dict["neuron_params"]["V_th"],
     #             self.net_dict["neuron_params"]["E_L"],

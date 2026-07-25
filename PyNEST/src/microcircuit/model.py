@@ -113,7 +113,7 @@ class Model:
         self.__create_neuronal_populations()
         if len(self.sim_dict["rec_dev"]) > 0:
             self.__create_recording_devices()
-        if self.net_dict["bg_input_type"] == "poisson":
+        if self.net_dict["CC_type"] == "poisson":
             self.__create_poisson_bg_input()
         if self.stim_dict["dc_transient"]:
             self.__create_dc_stim_input()
@@ -141,7 +141,7 @@ class Model:
 
         if len(self.sim_dict["rec_dev"]) > 0:
             self.__connect_recording_devices()
-        if self.net_dict["bg_input_type"] == "poisson":
+        if self.net_dict["CC_type"] == "poisson":
             self.__connect_poisson_bg_input()
         if self.stim_dict["dc_transient"]:
             self.__connect_dc_stim_input()
@@ -276,9 +276,9 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             )
         ).astype(int)
         self.ext_indegrees = np.round(
-            (self.net_dict["K_ext"] * self.net_dict["K_scaling"])
+            (self.net_dict["K_CC_full"] * self.net_dict["K_scaling"])
         ).astype(int)
-        # self.ext_indegrees = np.round((self.net_dict["K_ext"])).astype(int) # why scale external inputs?
+        # self.ext_indegrees = np.round((self.net_dict["K_CC_full"])).astype(int) # why scale external inputs?
 
         # conversion from PSPs to PSCs
         PSC_over_PSP = helpers.postsynaptic_potential_to_current(
@@ -290,15 +290,15 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
         PSC_ext = self.net_dict["PSP_exc_mean"] * PSC_over_PSP
 
         # DC input compensates for potentially missing Poisson input
-        if self.net_dict["bg_input_type"] == "poisson":
+        if self.net_dict["CC_type"] == "poisson":
             DC_amp = np.zeros(self.num_pops)
         # else:
-        elif self.net_dict["bg_input_type"] == "dc":
+        elif self.net_dict["CC_type"] == "dc":
             # if nest.Rank() == 0: # default case should not raise a warning
             # warnings.warn("DC input created to compensate missing Poisson input.\n")
             DC_amp = helpers.dc_input_compensating_poisson(
                 self.net_dict["bg_rate"],
-                self.net_dict["K_ext"],
+                self.net_dict["K_CC_full"],
                 self.net_dict["neuron_params"]["tau_syn"],
                 PSC_ext,
             )
@@ -315,14 +315,14 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                     self.net_dict["neuron_params"]["tau_syn"],
                     self.net_dict["full_mean_rates"],
                     DC_amp,
-                    self.net_dict["bg_input_type"],
+                    self.net_dict["CC_type"],
                     self.net_dict["bg_rate"],
-                    self.net_dict["K_ext"],
+                    self.net_dict["K_CC_full"],
                 )
             )
 
             # check if all populations are supra-threshold with the changed DC input
-            if self.net_dict["bg_input_type"] == "dc":
+            if self.net_dict["CC_type"] == "dc":
                 I_rh = helpers.compute_rheo_base_current(
                     self.net_dict["neuron_params"]["V_th"],
                     self.net_dict["neuron_params"]["E_L"],
@@ -523,10 +523,10 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
         """Creates DC generators for external stimulation if specified
         in ``stim_dict``.
 
-        The final amplitude is the ``stim_dict['dc_amp'] * net_dict['K_ext']``.
+        The final amplitude is the ``stim_dict['dc_amp'] * net_dict['K_CC_full']``.
 
         """
-        dc_amp_stim = self.stim_dict["dc_transient_amp"] * self.net_dict["K_ext"]
+        dc_amp_stim = self.stim_dict["dc_transient_amp"] * self.net_dict["K_CC_full"]
 
         if nest.Rank() == 0:
             print("Creating DC generators for external stimulation.")
@@ -624,7 +624,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             syn_dict_poisson = {
                 "synapse_model": "static_synapse",
                 "weight": self.weight_ext,
-                "delay": self.net_dict["delay_poisson"],
+                "delay": self.net_dict["delay_CC"],
             }
 
             nest.Connect(

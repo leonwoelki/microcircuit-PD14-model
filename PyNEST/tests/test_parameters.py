@@ -1,5 +1,7 @@
 """Unit tests for the Pydantic parameter workflow."""
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -121,3 +123,110 @@ def test_stimulus_parameters_are_serializable():
 def test_populations_are_not_editable_parameters():
     assert "populations" not in Parameters.model_fields
     assert "populations" not in Parameters.model_json_schema()["properties"]
+
+
+def test_simulation_defaults():
+    params = Parameters()
+
+    assert params.t_presim == 500.0
+    assert params.t_sim == 1000.0
+    assert params.sim_resolution == 0.1
+    assert params.rec_dev == ["spike_recorder"]
+    assert params.data_path == Path("data")
+    assert params.rng_seed == 55
+    assert params.local_num_threads == 4
+    assert params.rec_V_int == 1.0
+    assert params.overwrite_files is True
+    assert params.print_time is True
+    assert params.store_metadata is True
+
+
+def test_valid_simulation_assignment():
+    params = Parameters()
+
+    params.t_presim = 0.0
+    params.t_sim = 0.0
+    params.sim_resolution = 0.5
+    params.rec_dev = ["spike_recorder", "voltmeter"]
+    params.data_path = "results"
+    params.rng_seed = 1
+    params.local_num_threads = 1
+    params.rec_V_int = 0.5
+    params.overwrite_files = False
+    params.print_time = False
+    params.store_metadata = False
+
+    assert params.t_presim == 0.0
+    assert params.t_sim == 0.0
+    assert params.sim_resolution == 0.5
+    assert params.rec_dev == ["spike_recorder", "voltmeter"]
+    assert params.data_path == Path("results")
+    assert params.rng_seed == 1
+    assert params.local_num_threads == 1
+    assert params.rec_V_int == 0.5
+    assert params.overwrite_files is False
+    assert params.print_time is False
+    assert params.store_metadata is False
+
+
+def test_empty_rec_dev_is_valid():
+    params = Parameters()
+
+    params.rec_dev = []
+
+    assert params.rec_dev == []
+
+
+@pytest.mark.parametrize(
+    ("field_name", "invalid_value"),
+    [
+        ("t_presim", -1.0),
+        ("t_sim", -1.0),
+        ("sim_resolution", 0.0),
+        ("sim_resolution", -1.0),
+        ("rng_seed", 0),
+        ("rng_seed", -1),
+        ("local_num_threads", 0),
+        ("local_num_threads", -1),
+        ("rec_V_int", 0.0),
+        ("rec_V_int", -1.0),
+    ],
+)
+def test_invalid_simulation_assignment_is_rejected(field_name, invalid_value):
+    params = Parameters()
+
+    with pytest.raises(ValidationError):
+        setattr(params, field_name, invalid_value)
+
+
+def test_invalid_rec_dev_entry_is_rejected():
+    params = Parameters()
+
+    with pytest.raises(ValidationError):
+        params.rec_dev = ["not_a_device"]
+
+
+def test_unknown_simulation_field_is_rejected():
+    with pytest.raises(ValidationError):
+        Parameters(not_a_real_simulation_field=1)
+
+
+def test_simulation_parameters_are_serializable():
+    params = Parameters(data_path="results", rec_dev=["spike_recorder", "voltmeter"])
+
+    data = params.model_dump(
+        mode="json",
+        exclude_computed_fields=True,
+    )
+
+    assert data["t_presim"] == params.t_presim
+    assert data["t_sim"] == params.t_sim
+    assert data["sim_resolution"] == params.sim_resolution
+    assert data["rec_dev"] == ["spike_recorder", "voltmeter"]
+    assert data["data_path"] == "results"
+    assert data["rng_seed"] == params.rng_seed
+    assert data["local_num_threads"] == params.local_num_threads
+    assert data["rec_V_int"] == params.rec_V_int
+    assert data["overwrite_files"] is True
+    assert data["print_time"] is True
+    assert data["store_metadata"] is True
