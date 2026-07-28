@@ -170,12 +170,12 @@ def postsynaptic_potential_to_current(C_m, tau_m, tau_syn):
 #########################################################################
 
 
-def dc_input_compensating_poisson(bg_rate, K_CC_full, tau_syn, PSC_ext):
+def dc_input_compensating_poisson(rate_CC, K_CC_full, tau_syn, PSC_ext):
     """Computes DC input if no Poisson input is provided to the microcircuit.
 
     Parameters
     ----------
-    bg_rate
+    rate_CC
         Rate of external Poisson generators (in spikes/s).
     K_CC_full
         External indegrees.
@@ -189,7 +189,7 @@ def dc_input_compensating_poisson(bg_rate, K_CC_full, tau_syn, PSC_ext):
     DC
         DC input (in pA) which compensates lacking Poisson input.
     """
-    DC = bg_rate * K_CC_full * PSC_ext * tau_syn * 0.001
+    DC = rate_CC * K_CC_full * PSC_ext * tau_syn * 0.001
     return DC
 
 
@@ -207,7 +207,7 @@ def adjust_weights_and_input_to_synapse_scaling(
     DC_amp,
     # poisson_input,
     CC_type,
-    bg_rate,
+    rate_CC,
     K_CC_full,
 ):
     """Adjusts weights and external input to scaling of indegrees.
@@ -238,7 +238,7 @@ def adjust_weights_and_input_to_synapse_scaling(
         #True if Poisson input is used.
     CC_type
         Type of background input, either "poisson" or "dc".
-    bg_rate
+    rate_CC
         Firing rate of Poisson generators (in spikes/s).
     K_CC_full
         External indegrees.
@@ -265,7 +265,7 @@ def adjust_weights_and_input_to_synapse_scaling(
     DC_amp_new = DC_amp + 0.001 * tau_syn * (1.0 - np.sqrt(K_scaling)) * input_rec
 
     if CC_type == "poisson":
-        input_ext = PSC_ext * K_CC_full * bg_rate
+        input_ext = PSC_ext * K_CC_full * rate_CC
         DC_amp_new += 0.001 * tau_syn * (1.0 - np.sqrt(K_scaling)) * input_ext
 
     return PSC_matrix_new, PSC_ext_new, DC_amp_new

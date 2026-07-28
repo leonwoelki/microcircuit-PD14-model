@@ -83,18 +83,22 @@ class Parameters(BaseModel):
 
     N_scaling: float = Field(
         default=1.0,
+        gt=0,
         description=r"Scaling factor determining network size.",
         json_schema_extra={"unit": "", "latex": r"$\alpha_N$", "section": r"network"},
     )
 
     K_scaling: float = Field(
         default=1.0,
+        gt=0,
         description=r"Scaling factor determining synapse numbers.",
         json_schema_extra={"unit": "", "latex": r"$\alpha_K$", "section": r"network"},
     )
 
-    full_num_neurons: list = Field(
-        default=[20683, 5834, 21915, 5479, 4850, 1065, 14395, 2948],
+    full_num_neurons: tuple[Annotated[int, Field(gt=0)], ...] = Field(
+        default=(20683, 5834, 21915, 5479, 4850, 1065, 14395, 2948),
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Default number of neurons in each population $x$ of the full-scale network.",
         json_schema_extra={
             "unit": "",
@@ -103,22 +107,91 @@ class Parameters(BaseModel):
         },
     )
 
-    conn_probs: list = Field(
-        default=[
-            [0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0, 0.0076, 0.0],
-            [0.1346, 0.1371, 0.0316, 0.0515, 0.0755, 0.0, 0.0042, 0.0],
-            [0.0077, 0.0059, 0.0497, 0.135, 0.0067, 0.0003, 0.0453, 0.0],
-            [0.0691, 0.0029, 0.0794, 0.1597, 0.0033, 0.0, 0.1057, 0.0],
-            [0.1004, 0.0622, 0.0505, 0.0057, 0.0831, 0.3726, 0.0204, 0.0],
-            [0.0548, 0.0269, 0.0257, 0.0022, 0.06, 0.3158, 0.0086, 0.0],
-            [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],
-            [0.0364, 0.001, 0.0034, 0.0005, 0.0277, 0.008, 0.0658, 0.1443],
+    conn_probs: tuple[
+        Annotated[
+            tuple[Annotated[float, Field(ge=0.0, le=1.0)], ...],
+            Field(min_length=len(populations), max_length=len(populations)),
         ],
+        ...,
+    ] = Field(
+        default=(
+            (0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0, 0.0076, 0.0),
+            (0.1346, 0.1371, 0.0316, 0.0515, 0.0755, 0.0, 0.0042, 0.0),
+            (0.0077, 0.0059, 0.0497, 0.135, 0.0067, 0.0003, 0.0453, 0.0),
+            (0.0691, 0.0029, 0.0794, 0.1597, 0.0033, 0.0, 0.1057, 0.0),
+            (0.1004, 0.0622, 0.0505, 0.0057, 0.0831, 0.3726, 0.0204, 0.0),
+            (0.0548, 0.0269, 0.0257, 0.0022, 0.06, 0.3158, 0.0086, 0.0),
+            (0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252),
+            (0.0364, 0.001, 0.0034, 0.0005, 0.0277, 0.008, 0.0658, 0.1443),
+        ),
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Connection probabilities for each pair of pre- and postsynaptic "
         r"populations $x$ and $y$ (first index: target; second index: source)",
         json_schema_extra={
             "unit": "",
             "latex": r"$C_{yx}$",
+            "section": r"network",
+        },
+    )
+
+    ###################################
+    ## cortico-cortical (background) input parameters
+
+    full_mean_rates: tuple[Annotated[float, Field(ge=0.0)], ...] = Field(
+        default=(0.903, 2.965, 4.414, 5.876, 7.569, 8.633, 1.105, 7.829),
+        max_length=len(populations),
+        min_length=len(populations),
+        description=r"Mean firing rates of the different populations $x$ in the non-scaled version of the microcircuit "
+        "(same order as in `populations`; required for network scaling).",
+        json_schema_extra={
+            "unit": "spikes/s",
+            "latex": r"$\tilde{\nu}_x$",
+            "section": r"network",
+        },
+    )
+
+    CC_type: Literal["poisson", "dc"] = Field(
+        default="dc",
+        description=r"Type of cortico-cortical input ('poisson' or 'dc').",
+        json_schema_extra={
+            "unit": "",
+            "latex": r"bg\_input\_type",
+            "section": r"network",
+        },
+    )
+
+    K_CC_full: tuple[Annotated[float, Field(ge=0.0)], ...] = Field(
+        default=(1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100),
+        max_length=len(populations),
+        min_length=len(populations),
+        description=r"Number of cortico-cortical inputs per neuron (in-degree) "
+        "in the full-scalenework for each cortical population $y$ (same order as in `populations`).",
+        json_schema_extra={
+            "unit": "",
+            "latex": r"$\tilde{K}_{\mathcal{C}_y}$",
+            "section": r"network",
+        },
+    )
+
+    rate_CC: float = Field(
+        default=8.0,
+        ge=0,
+        description=r"Rate of cortico-cortical inputs.",
+        json_schema_extra={
+            "unit": "spikes/s",
+            "latex": r"$\nu_\text{CC}$",
+            "section": r"network",
+        },
+    )
+
+    delay_CC: float = Field(
+        gt=0,
+        default=1.5,
+        description=r"Spike transmission delay of cortico-cortical inputs.",
+        json_schema_extra={
+            "unit": "ms",
+            "latex": r"$\bar{d}_\text{CC}$",
             "section": r"network",
         },
     )
@@ -207,6 +280,7 @@ class Parameters(BaseModel):
     ## TODO: rename variable into `weight_exc_mean`
     PSP_exc_mean: float = Field(
         default=0.15,
+        gt=0,
         description=r"Mean weight of excitatory synapses (PSP amplitude).",
         json_schema_extra={
             "unit": "mV",
@@ -218,6 +292,7 @@ class Parameters(BaseModel):
     ## TODO: rename variable into `weight_cv`
     weight_rel_std: float = Field(
         default=0.1,
+        ge=0,
         description=r"Coefficient of variation of synaptic weight distributions (ratio between standard deviation and mean).",
         json_schema_extra={
             "unit": "",
@@ -228,6 +303,7 @@ class Parameters(BaseModel):
 
     g: float = Field(
         default=-4.0,
+        lt=0,
         description=r"Relative weight of inhibitory synapses (ratio of inhibitory and excitatory synaptic weights).",
         json_schema_extra={
             "unit": "",
@@ -248,6 +324,7 @@ class Parameters(BaseModel):
 
     delay_exc_mean: float = Field(
         default=1.5,
+        gt=0,
         description=r"Mean spike transmission delay of excitatory connections.",
         json_schema_extra={
             "unit": "ms",
@@ -258,6 +335,7 @@ class Parameters(BaseModel):
 
     delay_inh_mean: float = Field(
         default=0.75,
+        gt=0,
         description=r"Mean spike transmission delay of inhibitory connections.",
         json_schema_extra={
             "unit": "ms",
@@ -269,6 +347,7 @@ class Parameters(BaseModel):
     ## TODO: rename variable into `delay_cv`
     delay_rel_std: float = Field(
         default=0.5,
+        ge=0,
         description=r"Coefficient of variation of delay distributions (ratio between standard deviation and mean).",
         json_schema_extra={
             "unit": "",
@@ -280,7 +359,7 @@ class Parameters(BaseModel):
     ###################################
     ## initialization parameters
 
-    V0_type: str = Field(
+    V0_type: Literal["original", "optimized"] = Field(
         default="optimized",
         description=r"Type of initial condition for the membrane potentials ('original' or 'optimized'). 'original': uniform mean and standard deviation for all populations. 'optimized': population-specific mean and standard deviation (default).",
         json_schema_extra={
@@ -311,8 +390,10 @@ class Parameters(BaseModel):
         },
     )
 
-    V0_mean_optimized: list = Field(
-        default=[-68.28, -63.16, -63.33, -63.45, -63.11, -61.66, -66.72, -61.43],
+    V0_mean_optimized: tuple[float, ...] = Field(
+        default=(-68.28, -63.16, -63.33, -63.45, -63.11, -61.66, -66.72, -61.43),
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Population-specific mean of initial membrane potentials in case V0_type = 'optimized' (same order as in `populations`).",
         json_schema_extra={
             "unit": "mV",
@@ -321,8 +402,10 @@ class Parameters(BaseModel):
         },
     )
 
-    V0_std_optimized: list = Field(
-        default=[5.36, 4.57, 4.74, 4.94, 4.94, 4.55, 5.46, 4.48],
+    V0_std_optimized: tuple[float, ...] = Field(
+        default=(5.36, 4.57, 4.74, 4.94, 4.94, 4.55, 5.46, 4.48),
+        max_length=len(populations),
+        min_length=len(populations),
         description=r"Population-specific standard deviation of initial membrane potentials in case V0_type = 'optimized' (same order as in `populations`).",
         json_schema_extra={
             "unit": "mV",
@@ -332,63 +415,6 @@ class Parameters(BaseModel):
     )
 
     ###################################
-    ## stimulus parameters
-    full_mean_rates: list[Annotated[float, Field(ge=0.0)]] = Field(
-        default=[0.903, 2.965, 4.414, 5.876, 7.569, 8.633, 1.105, 7.829],
-        max_length=len(populations),
-        min_length=len(populations),
-        description=r"Mean firing rates of the different populations $x$ in the non-scaled version of the microcircuit (same order as in `populations`; required for network scaling).",
-        json_schema_extra={
-            "unit": "spikes/s",
-            "latex": r"$\tilde{\nu}_x$",
-            "section": r"stimulus",
-        },
-    )
-
-    CC_type: Literal["poisson", "dc"] = Field(
-        default="dc",
-        description=r"Type of cortico-cortical input ('poisson' or 'dc').",
-        json_schema_extra={
-            "unit": "",
-            "latex": r"bg\_input\_type",
-            "section": r"stimulus",
-        },
-    )
-
-    K_CC_full: list[Annotated[float, Field(ge=0.0)]] = Field(
-        default=[1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100],
-        max_length=len(populations),
-        min_length=len(populations),
-        description=r"Number of cortico-cortical inputs per neuron (in-degree) in the full-scalenework for each cortical population $y$ (same order as in `populations`).",
-        json_schema_extra={
-            "unit": "",
-            "latex": r"$\tilde{K}_{\mathcal{C}_y}$",
-            "section": r"stimulus",
-        },
-    )
-
-    ## TODO: rename variable into `rate_CC`
-    bg_rate: float = Field(
-        default=8.0,
-        ge=0,
-        description=r"Rate of cortico-cortical inputs.",
-        json_schema_extra={
-            "unit": "spikes/s",
-            "latex": r"$\nu_\text{CC}$",
-            "section": r"stimulus",
-        },
-    )
-
-    delay_CC: float = Field(
-        ge=0,
-        default=1.5,
-        description=r"Spike transmission delay of cortico-cortical inputs.",
-        json_schema_extra={
-            "unit": "ms",
-            "latex": r"$\bar{d}_\text{CC}$",
-            "section": r"stimulus",
-        },
-    )
     # stimulus parameters
     thalamic_input: bool = Field(
         default=False,
@@ -444,8 +470,8 @@ class Parameters(BaseModel):
         },
     )
 
-    conn_probs_th: list[Annotated[float, Field(ge=0.0, le=1.0)]] = Field(
-        default=[0.0, 0.0, 0.0983, 0.0619, 0.0, 0.0, 0.0512, 0.0196],
+    conn_probs_th: tuple[Annotated[float, Field(ge=0.0, le=1.0)], ...] = Field(
+        default=(0.0, 0.0, 0.0983, 0.0619, 0.0, 0.0, 0.0512, 0.0196),
         max_length=len(populations),
         min_length=len(populations),
         description=r"Probabilities of connections from the thalamus to each cortical populations $y$ (same order as in `populations`).",
@@ -534,9 +560,9 @@ class Parameters(BaseModel):
         },
     )
 
-    rec_dev: list[Literal["spike_recorder", "voltmeter"]] = Field(
-        # Literal rejects unsupported device names; the factory creates a fresh list.
-        default_factory=lambda: ["spike_recorder"],
+    rec_dev: tuple[Literal["spike_recorder", "voltmeter"], ...] = Field(
+        # Literal rejects unsupported device names; the tuple is immutable so no shared-default risk.
+        default=("spike_recorder",),
         description=r"List of recording devices ('spike_recorder' [default] and/or 'voltmeter'). "
         r"Nothing will be recorded if an empty list is given.",
         json_schema_extra={
@@ -758,7 +784,7 @@ class Parameters(BaseModel):
     #     # if nest.Rank() == 0: # default case should not raise a warning
     #     # warnings.warn("DC input created to compensate missing Poisson input.\n")
     #     DC_amp = helpers.dc_input_compensating_poisson(
-    #         self.net_dict["bg_rate"],
+    #         self.net_dict["rate_CC"],
     #         self.net_dict["K_CC_full"],
     #         self.net_dict["neuron_params"]["tau_syn"],
     #         PSC_ext,
@@ -777,7 +803,7 @@ class Parameters(BaseModel):
     #             self.net_dict["full_mean_rates"],
     #             DC_amp,
     #             self.net_dict["CC_type"],
-    #             self.net_dict["bg_rate"],
+    #             self.net_dict["rate_CC"],
     #             self.net_dict["K_CC_full"],
     #         )
     #     )

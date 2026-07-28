@@ -11,12 +11,26 @@ from microcircuit.parameter_definitions import Parameters
 def test_stimulus_defaults():
     params = Parameters()
 
+    assert params.full_mean_rates == (
+        0.903,
+        2.965,
+        4.414,
+        5.876,
+        7.569,
+        8.633,
+        1.105,
+        7.829,
+    )
+    assert params.CC_type == "dc"
+    assert params.K_CC_full == (1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100)
+    assert params.rate_CC == 8.0
+    assert params.delay_CC == 1.5
     assert params.thalamic_input is False
     assert params.th_start == 700.0
     assert params.th_duration == 10.0
     assert params.th_rate == 120.0
     assert params.num_th_neurons == 902
-    assert params.conn_probs_th == [
+    assert params.conn_probs_th == (
         0.0,
         0.0,
         0.0983,
@@ -25,7 +39,7 @@ def test_stimulus_defaults():
         0.0,
         0.0512,
         0.0196,
-    ]
+    )
     assert params.dc_transient is False
     assert params.dc_transient_start == 650.0
     assert params.dc_transient_dur == 100.0
@@ -35,6 +49,11 @@ def test_stimulus_defaults():
 def test_valid_stimulus_assignment():
     params = Parameters()
 
+    params.full_mean_rates = [1.0] * len(params.populations)
+    params.CC_type = "poisson"
+    params.K_CC_full = [1000] * len(params.populations)
+    params.rate_CC = 0.0
+    params.delay_CC = 1.0
     params.thalamic_input = True
     params.th_start = 0.0
     params.th_duration = 20.0
@@ -43,7 +62,13 @@ def test_valid_stimulus_assignment():
     params.dc_transient = True
     params.dc_transient_start = 0.0
     params.dc_transient_dur = 50.0
+    params.dc_transient_amp = -0.5
 
+    assert params.full_mean_rates == (1.0,) * len(params.populations)
+    assert params.CC_type == "poisson"
+    assert params.K_CC_full == (1000,) * len(params.populations)
+    assert params.rate_CC == 0.0
+    assert params.delay_CC == 1.0
     assert params.thalamic_input is True
     assert params.th_start == 0.0
     assert params.th_duration == 20.0
@@ -52,11 +77,15 @@ def test_valid_stimulus_assignment():
     assert params.dc_transient is True
     assert params.dc_transient_start == 0.0
     assert params.dc_transient_dur == 50.0
+    assert params.dc_transient_amp == -0.5
 
 
 @pytest.mark.parametrize(
     ("field_name", "invalid_value"),
     [
+        ("rate_CC", -1.0),
+        ("delay_CC", 0.0),
+        ("delay_CC", -1.0),
         ("th_start", -1.0),
         ("th_duration", 0.0),
         ("th_duration", -1.0),
@@ -75,10 +104,38 @@ def test_invalid_stimulus_assignment_is_rejected(field_name, invalid_value):
         setattr(params, field_name, invalid_value)
 
 
+def test_invalid_cc_type_is_rejected():
+    params = Parameters()
+
+    with pytest.raises(ValidationError):
+        params.CC_type = "not_a_valid_type"
+
+
+@pytest.mark.parametrize("field_name", ["full_mean_rates", "K_CC_full"])
+@pytest.mark.parametrize("invalid_value", [-1.0])
+def test_invalid_population_vector_element_is_rejected(field_name, invalid_value):
+    params = Parameters()
+    values = list(getattr(params, field_name))
+    values[0] = invalid_value
+
+    with pytest.raises(ValidationError):
+        setattr(params, field_name, values)
+
+
+@pytest.mark.parametrize("field_name", ["full_mean_rates", "K_CC_full"])
+@pytest.mark.parametrize("length_offset", [-1, 1])
+def test_invalid_population_vector_length_is_rejected(field_name, length_offset):
+    params = Parameters()
+    values = [0.0] * (len(params.populations) + length_offset)
+
+    with pytest.raises(ValidationError):
+        setattr(params, field_name, values)
+
+
 @pytest.mark.parametrize("invalid_probability", [-0.1, 1.1])
 def test_invalid_thalamic_probability_is_rejected(invalid_probability):
     params = Parameters()
-    probabilities = params.conn_probs_th.copy()
+    probabilities = list(params.conn_probs_th)
     probabilities[0] = invalid_probability
 
     with pytest.raises(ValidationError):
@@ -91,7 +148,7 @@ def test_probability_boundaries_are_valid():
 
     params.conn_probs_th = probabilities
 
-    assert params.conn_probs_th == probabilities
+    assert params.conn_probs_th == tuple(probabilities)
 
 
 @pytest.mark.parametrize("length_offset", [-1, 1])
@@ -104,20 +161,48 @@ def test_invalid_thalamic_probability_length_is_rejected(length_offset):
 
 
 def test_stimulus_parameters_are_serializable():
-    params = Parameters(thalamic_input=True, dc_transient=True)
+    params = Parameters(thalamic_input=True, dc_transient=True, CC_type="poisson")
 
     data = params.model_dump(
         mode="json",
         exclude_computed_fields=True,
     )
 
+    assert data["full_mean_rates"] == list(params.full_mean_rates)
+    assert data["CC_type"] == "poisson"
+    assert data["K_CC_full"] == list(params.K_CC_full)
+    assert data["rate_CC"] == params.rate_CC
+    assert data["delay_CC"] == params.delay_CC
     assert data["thalamic_input"] is True
-    assert data["conn_probs_th"] == params.conn_probs_th
+    assert data["conn_probs_th"] == list(params.conn_probs_th)
     assert data["dc_transient"] is True
+    assert data["dc_transient_amp"] == params.dc_transient_amp
     assert "populations" not in data
     assert "PSP_th" not in data
     assert "delay_th_mean" not in data
     assert "delay_th_rel_std" not in data
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "full_num_neurons",
+        "conn_probs",
+        "full_mean_rates",
+        "K_CC_full",
+        "conn_probs_th",
+        "V0_mean_optimized",
+        "V0_std_optimized",
+        "rec_dev",
+    ],
+)
+def test_population_vectors_are_immutable(field_name):
+    params = Parameters()
+    value = getattr(params, field_name)
+
+    assert isinstance(value, tuple)
+    with pytest.raises(TypeError):
+        value[0] = value[0]
 
 
 def test_populations_are_not_editable_parameters():
@@ -131,7 +216,7 @@ def test_simulation_defaults():
     assert params.t_presim == 500.0
     assert params.t_sim == 1000.0
     assert params.sim_resolution == 0.1
-    assert params.rec_dev == ["spike_recorder"]
+    assert params.rec_dev == ("spike_recorder",)
     assert params.data_path == Path("data")
     assert params.rng_seed == 55
     assert params.local_num_threads == 4
@@ -159,7 +244,7 @@ def test_valid_simulation_assignment():
     assert params.t_presim == 0.0
     assert params.t_sim == 0.0
     assert params.sim_resolution == 0.5
-    assert params.rec_dev == ["spike_recorder", "voltmeter"]
+    assert params.rec_dev == ("spike_recorder", "voltmeter")
     assert params.data_path == Path("results")
     assert params.rng_seed == 1
     assert params.local_num_threads == 1
@@ -174,7 +259,7 @@ def test_empty_rec_dev_is_valid():
 
     params.rec_dev = []
 
-    assert params.rec_dev == []
+    assert params.rec_dev == ()
 
 
 @pytest.mark.parametrize(

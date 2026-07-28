@@ -297,7 +297,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             # if nest.Rank() == 0: # default case should not raise a warning
             # warnings.warn("DC input created to compensate missing Poisson input.\n")
             DC_amp = helpers.dc_input_compensating_poisson(
-                self.net_dict["bg_rate"],
+                self.net_dict["rate_CC"],
                 self.net_dict["K_CC_full"],
                 self.net_dict["neuron_params"]["tau_syn"],
                 PSC_ext,
@@ -316,7 +316,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                     self.net_dict["full_mean_rates"],
                     DC_amp,
                     self.net_dict["CC_type"],
-                    self.net_dict["bg_rate"],
+                    self.net_dict["rate_CC"],
                     self.net_dict["K_CC_full"],
                 )
             )
@@ -486,7 +486,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             print("Creating Poisson generators for background input.")
 
         self.poisson_bg_input = nest.Create("poisson_generator", n=self.num_pops)
-        self.poisson_bg_input.rate = self.net_dict["bg_rate"] * self.ext_indegrees
+        self.poisson_bg_input.rate = self.net_dict["rate_CC"] * self.ext_indegrees
 
     def __create_thalamic_stim_input(self):
         """Creates the thalamic neuronal population if specified in
