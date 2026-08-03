@@ -683,7 +683,7 @@ class Parameters(BaseModel):
     )
     @property
     def num_neurons(self) -> list:
-        return (self.N_scaling * np.array(self.full_num_neurons)).astype(int)
+        return (self.N_scaling * np.array(self.full_num_neurons)).astype(int).tolist()
 
     @computed_field(
         description=r"Number of local cortical populations.",
@@ -709,7 +709,7 @@ class Parameters(BaseModel):
     def full_num_synapses(self) -> list:
         return helpers.num_synapses_from_conn_probs(
             self.conn_probs, self.full_num_neurons, self.full_num_neurons
-        )
+        ).tolist()
 
     @computed_field(
         description=r"Total number of connections between neuronal populations, for each pair of presynaptic and postsynaptic cortical populations $x$ and $y$; $Q_{yx}=\alpha_N \alpha_K \tilde{Q}_{yx}$",
@@ -721,9 +721,11 @@ class Parameters(BaseModel):
     )
     @property
     def num_synapses(self) -> list:
-        return np.round(
-            np.array(self.full_num_synapses) * self.N_scaling * self.K_scaling
-        ).astype(int)
+        return (
+            np.round(np.array(self.full_num_synapses) * self.N_scaling * self.K_scaling)
+            .astype(int)
+            .tolist()
+        )
 
     ## TODO: rename variable into `K_CC`
     @computed_field(
@@ -736,7 +738,7 @@ class Parameters(BaseModel):
     )
     @property
     def ext_indegrees(self) -> list:
-        return np.round(np.array(self.K_CC_full) * self.K_scaling).astype(int)
+        return np.round(np.array(self.K_CC_full) * self.K_scaling).astype(int).tolist()
 
     @computed_field(
         description=r"Unit PSP amplitude (ratio between PSP and PSC amplitude; conversion factor for synaptic weights).",
@@ -752,8 +754,39 @@ class Parameters(BaseModel):
             self.C_m, self.tau_m, self.tau_syn
         )
 
+    def _scaled_recurrent_weights_and_dc(self) -> tuple:
+        """Base recurrent/external weights and DC input, jointly adjusted for
+        K_scaling (see helpers.adjust_weights_and_input_to_synapse_scaling;
+        a no-op when K_scaling == 1). Computes bases inline rather than via
+        self.PSC_ext/self.DC_amp, since those properties return this method's
+        *output* - reusing them here would recurse.
+        """
+        base_psc_matrix = np.array(self.PSP_matrix_mean) / self.J_unit
+        base_psc_ext = self.PSP_exc_mean / self.J_unit
+
+        if self.CC_type == "poisson":
+            base_dc_amp = np.zeros(self.num_pops)
+        else:
+            base_dc_amp = helpers.dc_input_compensating_poisson(
+                self.rate_CC, np.array(self.K_CC_full), self.tau_syn, base_psc_ext
+            )
+
+        return helpers.adjust_weights_and_input_to_synapse_scaling(
+            np.array(self.full_num_neurons),
+            np.array(self.full_num_synapses),
+            self.K_scaling,
+            base_psc_matrix,
+            base_psc_ext,
+            self.tau_syn,
+            np.array(self.full_mean_rates),
+            base_dc_amp,
+            self.CC_type,
+            self.rate_CC,
+            np.array(self.K_CC_full),
+        )
+
     @computed_field(
-        description=r"Matrix of mean PSC amplitudes for all pairs of presynaptic and postsynaptic cortical populations; $\bar{I}_{yx}=J_{yx}/J_\text{unit}$.",
+        description=r"Matrix of mean PSC amplitudes for all pairs of presynaptic and postsynaptic cortical populations; $\bar{I}_{yx}=J_{yx}/J_\text{unit}$, adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the recurrent input.",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$\bar{I}_{yx}$",
@@ -762,10 +795,10 @@ class Parameters(BaseModel):
     )
     @property
     def PSC_matrix_mean(self) -> list:
-        return self.PSP_matrix_mean / self.J_unit
+        return self._scaled_recurrent_weights_and_dc()[0].tolist()
 
     @computed_field(
-        description=r"Mean PSC amplitude of cortico-cortical inputs; $\bar{I}_\text{CC}=J/J_\text{unit}$.",
+        description=r"Mean PSC amplitude of cortico-cortical inputs; $\bar{I}_\text{CC}=J/J_\text{unit}$, adjusted for indegree scaling ($\alpha_K\neq 1$).",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$\bar{I}_\text{CC}$",
@@ -774,86 +807,41 @@ class Parameters(BaseModel):
     )
     @property
     def PSC_ext(self) -> float:
-        return self.PSP_exc_mean / self.J_unit
+        return float(self._scaled_recurrent_weights_and_dc()[1])
 
-    # # DC input compensates for potentially missing Poisson input
-    # if self.net_dict["CC_type"] == "poisson":
-    #     DC_amp = np.zeros(self.num_pops)
-    # # else:
-    # elif self.net_dict["CC_type"] == "dc":
-    #     # if nest.Rank() == 0: # default case should not raise a warning
-    #     # warnings.warn("DC input created to compensate missing Poisson input.\n")
-    #     DC_amp = helpers.dc_input_compensating_poisson(
-    #         self.net_dict["rate_CC"],
-    #         self.net_dict["K_CC_full"],
-    #         self.net_dict["neuron_params"]["tau_syn"],
-    #         PSC_ext,
-    #     )
+    @computed_field(
+        description=r"DC input amplitude compensating for the potentially missing "
+        r"cortico-cortical Poisson input, for each cortical population $x$; "
+        r"$I_{DC,x}=0$ if $\mathcal{C}_\text{type}=\text{poisson}$, else "
+        r"$I_{DC,x}=\nu_\mathcal{C}\,\tilde{K}_{\mathcal{C}_x}\,\bar{I}_\text{CC}\,\tau_\text{syn}\cdot 10^{-3}$, "
+        r"adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the input.",
+        json_schema_extra={
+            "unit": "pA",
+            "latex": r"$I_{DC,x}$",
+            "section": r"neuron_derived",
+        },
+    )
+    @property
+    def DC_amp(self) -> list:
+        return self._scaled_recurrent_weights_and_dc()[2].tolist()
 
-    # # adjust weights and DC amplitude if the indegree is scaled
-    # if self.net_dict["K_scaling"] != 1:
-    #     PSC_matrix_mean, PSC_ext, DC_amp = (
-    #         helpers.adjust_weights_and_input_to_synapse_scaling(
-    #             self.net_dict["full_num_neurons"],
-    #             full_num_synapses,
-    #             self.net_dict["K_scaling"],
-    #             PSC_matrix_mean,
-    #             PSC_ext,
-    #             self.net_dict["neuron_params"]["tau_syn"],
-    #             self.net_dict["full_mean_rates"],
-    #             DC_amp,
-    #             self.net_dict["CC_type"],
-    #             self.net_dict["rate_CC"],
-    #             self.net_dict["K_CC_full"],
-    #         )
-    #     )
-
-    #     # check if all populations are supra-threshold with the changed DC input
-    #     if self.net_dict["CC_type"] == "dc":
-    #         I_rh = helpers.compute_rheo_base_current(
-    #             self.net_dict["neuron_params"]["V_th"],
-    #             self.net_dict["neuron_params"]["E_L"],
-    #             self.net_dict["neuron_params"]["C_m"],
-    #             self.net_dict["neuron_params"]["tau_m"],
-    #         )
-    #         for i, pop in enumerate(self.net_dict["populations"]):
-    #             if DC_amp[i] < I_rh:
-    #                 warnings.warn(
-    #                     "\nPopulation {} is sub-threshold with downscaled DC input amplitude and may not fire. ".format(
-    #                         pop
-    #                     )
-    #                 )
-
-    # # store final parameters as class attributes
-    # self.weight_matrix_mean = PSC_matrix_mean
-    # self.weight_ext = PSC_ext
-    # self.DC_amp = DC_amp
-
-    # # thalamic input
-    # if self.stim_dict["thalamic_input"]:
-    #     num_th_synapses = helpers.num_synapses_from_conn_probs(
-    #         self.stim_dict["conn_probs_th"],
-    #         self.stim_dict["num_th_neurons"],
-    #         self.net_dict["full_num_neurons"],
-    #     )[0]
-    #     self.weight_th = self.PSP_exc_mean * PSC_over_PSP
-    #     if self.net_dict["K_scaling"] != 1:
-    #         num_th_synapses *= self.net_dict["K_scaling"]
-    #         self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
-    #     self.num_th_synapses = np.round(num_th_synapses).astype(int)
-
-    # if nest.Rank() == 0:
-    #     message = ""
-    #     if self.net_dict["N_scaling"] != 1:
-    #         message += "Neuron numbers are scaled by a factor of {:.3f}.\n".format(
-    #             self.net_dict["N_scaling"]
-    #         )
-    #     if self.net_dict["K_scaling"] != 1:
-    #         message += "Indegrees are scaled by a factor of {:.3f}.".format(
-    #             self.net_dict["K_scaling"]
-    #         )
-    #         message += "\n  Weights and DC input are adjusted to compensate.\n"
-    #     print(message)
+    @computed_field(
+        description=r"Cortical populations whose (indegree-scaling-adjusted) DC input "
+        r"amplitude falls below the rheobase current; always empty unless "
+        r"$\mathcal{C}_\text{type}=\text{dc}$.",
+        json_schema_extra={
+            "unit": "",
+            "latex": r"\{x : I_{DC,x} < I_\text{rh}\}",
+            "section": r"neuron_derived",
+        },
+    )
+    @property
+    def subthreshold_populations(self) -> list:
+        if self.CC_type != "dc":
+            return []
+        I_rh = helpers.compute_rheo_base_current(self.V_th, self.E_L, self.C_m, self.tau_m)
+        dc_amp = self._scaled_recurrent_weights_and_dc()[2]
+        return [pop for pop, dc in zip(self.populations, dc_amp) if dc < I_rh]
 
     ###################################
     ## derived neuron parameters
@@ -874,7 +862,9 @@ class Parameters(BaseModel):
     ## derived synapse parameters
 
     @computed_field(
-        description=r"Matrix containing mean synaptic weights (PSP amplitudes) all pairs of presynaptic and postsynaptic populations.",
+        description=r"Matrix containing mean synaptic weights (PSP amplitudes) for all pairs "
+        r"of presynaptic and postsynaptic populations. The L4E$\to$L2/3E connection "
+        r"($[0,2]$) is doubled relative to the other excitatory connections.",
         json_schema_extra={
             "unit": "mV",
             "latex": r"$J_{yx}$ ($\forall y,x\in\mathcal{P}$)",
@@ -883,9 +873,11 @@ class Parameters(BaseModel):
     )
     @property
     def PSP_matrix_mean(self) -> list:
-        return helpers.get_exc_inh_matrix(
+        matrix = helpers.get_exc_inh_matrix(
             self.PSP_exc_mean, self.PSP_exc_mean * self.g, len(self.populations)
         )
+        matrix[0, 2] = 2.0 * self.PSP_exc_mean
+        return matrix.tolist()
 
     @computed_field(
         description=r"Matrix containing mean spike transmission delays all pairs of presynaptic and postsynaptic populations.",
@@ -899,17 +891,48 @@ class Parameters(BaseModel):
     def delay_matrix_mean(self) -> list:
         return helpers.get_exc_inh_matrix(
             self.delay_exc_mean, self.delay_inh_mean, len(self.populations)
-        )
-
-    ## TODO: synaptic weights $\bar{I})yx$ (PSC amplitude) for different pairs $x$ and $y$
-
-    ## TODO: delay_matrix_mean
+        ).tolist()
 
     ###################################
     ## derived stimulus parameters
+    @computed_field(
+        description=r"Number of thalamocortical synapses onto each cortical population $x$; "
+        r"$Q_{x,\text{th}}=\alpha_K \tilde{Q}_{x,\text{th}}$.",
+        json_schema_extra={
+            "unit": "",
+            "latex": r"$Q_{x,\text{th}}$",
+            "section": r"stimulus_derived",
+        },
+    )
+    @property
+    def num_th_synapses(self) -> list:
+        num_th_synapses = helpers.num_synapses_from_conn_probs(
+            self.conn_probs_th, self.num_th_neurons, self.full_num_neurons
+        )[0]
+        if self.K_scaling != 1:
+            num_th_synapses = num_th_synapses * self.K_scaling
+        return np.round(num_th_synapses).astype(int).tolist()
+
+    @computed_field(
+        description=r"Mean PSC amplitude of thalamocortical inputs; "
+        r"$\bar{I}_\text{th}=\bar{I}_\text{CC}/\sqrt{\alpha_K}$.",
+        json_schema_extra={
+            "unit": "pA",
+            "latex": r"$\bar{I}_\text{th}$",
+            "section": r"stimulus_derived",
+        },
+    )
+    @property
+    def weight_th(self) -> float:
+        # Not `self.PSC_ext`: that will carry the joint K-scaling adjustment
+        # (adjust_weights_and_input_to_synapse_scaling) once ported, while
+        # thalamic input scales only by 1/sqrt(K_scaling).
+        weight_th = self.PSP_exc_mean / self.J_unit
+        if self.K_scaling != 1:
+            weight_th /= np.sqrt(self.K_scaling)
+        return float(weight_th)
 
     ## TODO: mean total current of cc inputs $I_{C_x}$
-    ## TODO: mean current of each individual cc input
     ## TODO: t_stop
 
     #########################################################################

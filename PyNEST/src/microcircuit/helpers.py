@@ -45,7 +45,7 @@ if "DISPLAY" not in os.environ:
 #########################################################################
 
 
-def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> list:
+def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> np.ndarray:
     """
     Creates a matrix of size `num_pops` x `num_pops`, where columns with even
     indices (0, 2, 4, ...) are filled with `val_exc`, and columns with odd
