@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from microcircuit import helpers
 from microcircuit.parameter_definitions import Parameters
 
 
@@ -178,9 +180,6 @@ def test_stimulus_parameters_are_serializable():
     assert data["dc_transient"] is True
     assert data["dc_transient_amp"] == params.dc_transient_amp
     assert "populations" not in data
-    assert "PSP_th" not in data
-    assert "delay_th_mean" not in data
-    assert "delay_th_rel_std" not in data
 
 
 @pytest.mark.parametrize(
@@ -315,3 +314,371 @@ def test_simulation_parameters_are_serializable():
     assert data["overwrite_files"] is True
     assert data["print_time"] is True
     assert data["store_metadata"] is True
+
+
+@pytest.mark.parametrize(
+    ("field_name", "invalid_value"),
+    [
+        ("C_m", 0.0),
+        ("C_m", -1.0),
+        ("tau_m", 0.0),
+        ("tau_m", -1.0),
+        ("tau_syn", 0.0),
+        ("tau_syn", -1.0),
+        ("tau_ref", 0.0),
+        ("tau_ref", -1.0),
+    ],
+)
+def test_invalid_neuron_assignment_is_rejected(field_name, invalid_value):
+    params = Parameters()
+
+    with pytest.raises(ValidationError):
+        setattr(params, field_name, invalid_value)
+
+
+## derived (secondary) parameters
+
+
+def test_stimulus_stop_times_default():
+    params = Parameters()
+
+    assert params.th_stop == params.th_start + params.th_duration
+    assert params.dc_transient_stop == params.dc_transient_start + params.dc_transient_dur
+    assert params.th_stop == 710.0
+    assert params.dc_transient_stop == 750.0
+
+
+@pytest.mark.parametrize(
+    ("start_field", "duration_field", "stop_field"),
+    [
+        ("th_start", "th_duration", "th_stop"),
+        ("dc_transient_start", "dc_transient_dur", "dc_transient_stop"),
+    ],
+)
+def test_stimulus_stop_times_track_primary_parameters(start_field, duration_field, stop_field):
+    params = Parameters()
+
+    setattr(params, start_field, 100.0)
+    setattr(params, duration_field, 50.0)
+
+    assert getattr(params, stop_field) == 150.0
+
+
+def test_I_CC_default():
+    params = Parameters()
+
+    assert params.I_CC == pytest.approx(
+        params.rate_CC * (params.weight_exc_mean / params.J_unit) * params.tau_syn * 0.001
+    )
+
+
+@pytest.mark.parametrize("field_name", ["rate_CC", "weight_exc_mean", "tau_syn"])
+def test_I_CC_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.I_CC
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.I_CC != pytest.approx(baseline)
+
+
+def test_I_CC_populations_scales_with_K_CC_full():
+    params = Parameters()
+
+    assert params.I_CC_populations == [
+        pytest.approx(k * params.I_CC) for k in params.K_CC_full
+    ]
+
+
+def test_I_CC_populations_tracks_K_CC_full():
+    params = Parameters()
+
+    params.K_CC_full = [1.0] * len(params.populations)
+
+    assert params.I_CC_populations == [pytest.approx(params.I_CC)] * len(params.populations)
+
+
+def test_num_neurons_rounds_rather_than_truncates():
+    params = Parameters()
+    params.N_scaling = 0.2
+
+    assert params.num_neurons == [
+        round(n * 0.2) for n in params.full_num_neurons
+    ]
+    # regression check: 20683 * 0.2 = 4136.6, which truncates to 4136 but
+    # rounds to 4137 -- catches a silent switch back to `.astype(int)`.
+    assert params.num_neurons[0] == 4137
+
+
+def test_dc_transient_amp_populations_scales_with_K_CC_full():
+    params = Parameters()
+
+    assert params.dc_transient_amp_populations == [
+        pytest.approx(k * params.dc_transient_amp) for k in params.K_CC_full
+    ]
+
+
+@pytest.mark.parametrize("field_name", ["dc_transient_amp", "K_CC_full"])
+def test_dc_transient_amp_populations_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.dc_transient_amp_populations
+
+    if field_name == "K_CC_full":
+        setattr(params, field_name, [2.0 * k for k in params.K_CC_full])
+    else:
+        setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.dc_transient_amp_populations != pytest.approx(baseline)
+
+
+def test_num_pops_default():
+    params = Parameters()
+
+    assert params.num_pops == 8 == len(params.populations)
+
+
+def test_J_unit_default():
+    params = Parameters()
+
+    PSC_over_PSP = helpers.postsynaptic_potential_to_current(
+        params.C_m, params.tau_m, params.tau_syn
+    )
+    assert params.J_unit == pytest.approx(1 / PSC_over_PSP)
+
+
+@pytest.mark.parametrize("field_name", ["C_m", "tau_m", "tau_syn"])
+def test_J_unit_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.J_unit
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.J_unit != pytest.approx(baseline)
+
+
+def test_R_m_default():
+    params = Parameters()
+
+    assert params.R_m == pytest.approx(params.tau_m / params.C_m * 1000.0)
+
+
+@pytest.mark.parametrize("field_name", ["tau_m", "C_m"])
+def test_R_m_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.R_m
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.R_m != pytest.approx(baseline)
+
+
+def test_full_num_synapses_default():
+    params = Parameters()
+
+    expected = helpers.num_synapses_from_conn_probs(
+        params.conn_probs, params.full_num_neurons, params.full_num_neurons
+    )
+    assert params.full_num_synapses == expected.tolist()
+
+
+def test_num_synapses_scales_with_N_and_K_scaling():
+    params = Parameters()
+    params.N_scaling = 0.5
+    params.K_scaling = 0.5
+
+    expected = [[round(s * 0.25) for s in row] for row in params.full_num_synapses]
+
+    assert params.num_synapses == expected
+
+
+@pytest.mark.parametrize("field_name", ["N_scaling", "K_scaling", "conn_probs"])
+def test_num_synapses_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.num_synapses
+
+    if field_name == "conn_probs":
+        setattr(params, field_name, [[0.5] * 8] * 8)
+    else:
+        setattr(params, field_name, 0.5 * getattr(params, field_name))
+
+    assert params.num_synapses != baseline
+
+
+def test_ext_indegrees_rounds_rather_than_truncates():
+    params = Parameters()
+    params.K_scaling = 0.3
+
+    # regression check: matches the `num_neurons` rounding fix -- must not
+    # silently regress to `.astype(int)` truncation.
+    assert params.ext_indegrees == [round(k * 0.3) for k in params.K_CC_full]
+
+
+@pytest.mark.parametrize("field_name", ["K_CC_full", "K_scaling"])
+def test_ext_indegrees_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.ext_indegrees
+
+    if field_name == "K_CC_full":
+        setattr(params, field_name, [2.0 * k for k in params.K_CC_full])
+    else:
+        setattr(params, field_name, 2.0 * params.K_scaling)
+
+    assert params.ext_indegrees != baseline
+
+
+def test_PSC_ext_default_matches_unscaled_formula():
+    params = Parameters()  # K_scaling == 1.0 -> adjustment is a no-op
+
+    expected = params.weight_exc_mean / params.J_unit
+    assert params.PSC_ext == pytest.approx(expected)
+
+
+def test_DC_amp_zero_when_CC_type_poisson():
+    params = Parameters()
+    params.CC_type = "poisson"
+
+    assert params.DC_amp == [0.0] * params.num_pops
+
+
+def test_DC_amp_matches_unscaled_formula_when_CC_type_dc():
+    params = Parameters()  # default CC_type == "dc", K_scaling == 1.0
+
+    expected = helpers.dc_input_compensating_poisson(
+        params.rate_CC, np.array(params.K_CC_full), params.tau_syn, params.PSC_ext
+    )
+    assert params.DC_amp == pytest.approx(expected.tolist())
+
+
+@pytest.mark.parametrize("field_name", ["weight_exc_mean", "K_scaling"])
+def test_PSC_ext_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.PSC_ext
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.PSC_ext != pytest.approx(baseline)
+
+
+@pytest.mark.parametrize("field_name", ["weight_exc_mean", "g", "K_scaling"])
+def test_PSC_matrix_mean_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.PSC_matrix_mean
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.PSC_matrix_mean != baseline
+
+
+def test_subthreshold_populations_empty_when_CC_type_poisson():
+    params = Parameters()
+    params.CC_type = "poisson"
+
+    assert params.subthreshold_populations == []
+
+
+def test_subthreshold_populations_flags_when_dc_amp_too_low():
+    params = Parameters()
+    params.CC_type = "dc"
+    params.weight_exc_mean = 1e-6  # collapses PSC_ext/DC_amp toward ~0
+
+    I_rh = helpers.compute_rheo_base_current(
+        params.V_th, params.E_L, params.C_m, params.tau_m
+    )
+    assert I_rh > 0  # sanity: rheobase is positive with defaults
+    assert set(params.subthreshold_populations) == set(params.populations)
+
+
+def test_PSP_matrix_mean_exc_inh_pattern_and_doubled_entry():
+    params = Parameters()
+    matrix = params.PSP_matrix_mean
+
+    assert matrix[1][0] == pytest.approx(params.weight_exc_mean)  # exc column
+    assert matrix[1][1] == pytest.approx(params.weight_exc_mean * params.g)  # inh column
+    assert matrix[0][2] == pytest.approx(2.0 * params.weight_exc_mean)  # doubled L4E->L2/3E
+
+
+@pytest.mark.parametrize("field_name", ["weight_exc_mean", "g"])
+def test_PSP_matrix_mean_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.PSP_matrix_mean
+
+    setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.PSP_matrix_mean != baseline
+
+
+def test_delay_matrix_mean_exc_inh_pattern():
+    params = Parameters()
+    matrix = params.delay_matrix_mean
+
+    assert matrix[0][0] == pytest.approx(params.delay_exc_mean)
+    assert matrix[0][1] == pytest.approx(params.delay_inh_mean)
+
+
+def test_num_th_synapses_default():
+    params = Parameters()
+
+    expected = helpers.num_synapses_from_conn_probs(
+        params.conn_probs_th, params.num_th_neurons, params.full_num_neurons
+    )[0]
+    assert params.num_th_synapses == np.round(expected).astype(int).tolist()
+
+
+@pytest.mark.parametrize("field_name", ["conn_probs_th", "num_th_neurons", "K_scaling"])
+def test_num_th_synapses_tracks_primary_parameters(field_name):
+    params = Parameters()
+    baseline = params.num_th_synapses
+
+    if field_name == "conn_probs_th":
+        setattr(params, field_name, [0.5] * 8)
+    else:
+        setattr(params, field_name, 2.0 * getattr(params, field_name))
+
+    assert params.num_th_synapses != baseline
+
+
+def test_weight_th_default_matches_unscaled_formula():
+    params = Parameters()  # K_scaling == 1
+
+    assert params.weight_th == pytest.approx(params.weight_exc_mean / params.J_unit)
+
+
+def test_weight_th_scales_by_inverse_sqrt_K_scaling():
+    params = Parameters()
+    baseline = params.weight_th
+
+    params.K_scaling = 0.25
+
+    assert params.weight_th == pytest.approx(baseline / (0.25**0.5))
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "th_stop",
+        "dc_transient_stop",
+        "I_CC",
+        "I_CC_populations",
+        "num_neurons",
+        "dc_transient_amp_populations",
+        "num_pops",
+        "J_unit",
+        "R_m",
+        "full_num_synapses",
+        "num_synapses",
+        "ext_indegrees",
+        "PSC_matrix_mean",
+        "PSC_ext",
+        "DC_amp",
+        "subthreshold_populations",
+        "PSP_matrix_mean",
+        "delay_matrix_mean",
+        "num_th_synapses",
+        "weight_th",
+    ],
+)
+def test_derived_secondary_fields_are_read_only(field_name):
+    params = Parameters()
+
+    with pytest.raises(AttributeError):
+        setattr(params, field_name, 0.0)

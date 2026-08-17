@@ -287,7 +287,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             self.net_dict["neuron_params"]["tau_syn"],
         )
         PSC_matrix_mean = self.net_dict["PSP_matrix_mean"] * PSC_over_PSP
-        PSC_ext = self.net_dict["PSP_exc_mean"] * PSC_over_PSP
+        PSC_ext = self.net_dict["weight_exc_mean"] * PSC_over_PSP
 
         # DC input compensates for potentially missing Poisson input
         if self.net_dict["CC_type"] == "poisson":
@@ -349,7 +349,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 self.stim_dict["num_th_neurons"],
                 self.net_dict["full_num_neurons"],
             )[0]
-            self.weight_th = self.P.PSP_exc_mean * PSC_over_PSP
+            self.weight_th = self.P.weight_exc_mean * PSC_over_PSP
             if self.net_dict["K_scaling"] != 1:
                 num_th_synapses *= self.net_dict["K_scaling"]
                 self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
@@ -410,7 +410,8 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 E_L=self.net_dict["neuron_params"]["E_L"],
                 V_th=self.net_dict["neuron_params"]["V_th"],
                 V_reset=self.net_dict["neuron_params"]["V_reset"],
-                t_ref=self.net_dict["neuron_params"]["t_ref"],
+                # NEST's iaf_psc_exp kwarg is fixed as `t_ref`, unlike renamed field
+                t_ref=self.net_dict["neuron_params"]["tau_ref"],
                 I_e=self.DC_amp[i],
             )
 
@@ -587,7 +588,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                                 mean=self.weight_matrix_mean[i][j],
                                 std=abs(
                                     self.weight_matrix_mean[i][j]
-                                    * self.net_dict["weight_rel_std"]
+                                    * self.net_dict["weight_cv"]
                                 ),
                             ),
                             min=w_min,
@@ -650,7 +651,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 "weight": nest.math.redraw(
                     nest.random.normal(
                         mean=self.weight_th,
-                        std=self.weight_th * self.net_dict["weight_rel_std"],
+                        std=self.weight_th * self.net_dict["weight_cv"],
                     ),
                     min=0.0,
                     max=np.inf,
