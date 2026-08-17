@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# network.py
+# model.py
 #
 # This file is part of NEST.
 #
@@ -30,7 +30,6 @@ build and simulate the network.
 """
 
 import os
-import warnings
 
 import nest
 import numpy as np
@@ -47,43 +46,21 @@ class Model:
     functions to create and connect the network, to simulate the model, and to
     evaluate the resulting spike data.
 
-    # Provides functions to setup NEST, to create and connect all nodes of
-    # the network, to simulate, and to evaluate the resulting spike data.
-
-    # Instantiating a Network object derives dependent parameters and already
-    # initializes the NEST kernel.
+    Instantiating a Model object initializes the NEST kernel; all derived
+    parameters are available as computed fields on `P`.
 
     Parameters
-    ---------
+
+    ----------
 
     P:  Parameters
         Object containing all model parameters.
-
-    # sim_dict:
-    #     Dictionary containing all parameters specific to the simulation
-    #     (see: ``sim_params.py``).
-
-    # net_dict
-    #      Dictionary containing all parameters specific to the neuron and
-    #      network models (see: ``network_params.py``).
-    # stim_dict
-    #     Optional dictionary containing all parameter specific to the stimulus
-    #     (see: ``stimulus_params.py``)
-
     """
 
-    # def __init__(self, sim_dict, net_dict, stim_dict=None):
     def __init__(self, P):
 
         self.P = P
-        # self.sim_dict = sim_dict
-        # self.net_dict = net_dict
-        # self.stim_dict = stim_dict
-
-        # data directory
-        # self.data_path = sim_dict['data_paht']
-
-        # self.data_path = P.data_path
+        self.data_path = P.data_path
 
         if nest.Rank() == 0:
             if os.path.isdir(self.P.data_path):
@@ -95,12 +72,6 @@ class Model:
                 message = "  Directory has been created."
             print("Data will be written to: {}\n{}\n".format(self.P.data_path, message))
 
-        # derive parameters based on input dictionaries
-        # self.__derive_parameters()
-        ## obsolete as derived parameters are now computed directly in the Parameters class
-
-        stop
-
         # initialize the NEST kernel
         self.__setup_nest()
 
@@ -111,13 +82,13 @@ class Model:
 
         """
         self.__create_neuronal_populations()
-        if len(self.sim_dict["rec_dev"]) > 0:
+        if len(self.P.rec_dev) > 0:
             self.__create_recording_devices()
-        if self.net_dict["CC_type"] == "poisson":
+        if self.P.CC_type == "poisson":
             self.__create_poisson_bg_input()
-        if self.stim_dict["dc_transient"]:
+        if self.P.dc_transient:
             self.__create_dc_stim_input()
-        if self.stim_dict["thalamic_input"]:
+        if self.P.thalamic_input:
             self.__create_thalamic_stim_input()
 
     def connect(self):
@@ -139,61 +110,53 @@ class Model:
         """
         self.__connect_neuronal_populations()
 
-        if len(self.sim_dict["rec_dev"]) > 0:
+        if len(self.P.rec_dev) > 0:
             self.__connect_recording_devices()
-        if self.net_dict["CC_type"] == "poisson":
+        if self.P.CC_type == "poisson":
             self.__connect_poisson_bg_input()
-        if self.stim_dict["dc_transient"]:
+        if self.P.dc_transient:
             self.__connect_dc_stim_input()
-        if self.stim_dict["thalamic_input"]:
+        if self.P.thalamic_input:
             self.__connect_thalamic_stim_input()
 
         nest.Prepare()
         nest.Cleanup()
 
     def store_metadata(self):
-        if self.sim_dict["store_metadata"]:
+        if self.P.store_metadata:
             print(f"""
 
 ####################################################################
 
-Storing simulation metadata to {self.sim_dict["data_paht"]}
+Storing simulation metadata to {self.P.data_path}
 
 ####################################################################
 
 """)
 
-            ### parameters
-            helpers.dict2json(
-                self.sim_dict, self.sim_dict["data_paht"] + "/" + "sim_dict.json"
-            )
-            helpers.dict2json(
-                self.stim_dict, self.sim_dict["data_paht"] + "/" + "stim_dict.json"
-            )
-            helpers.dict2json(
-                self.net_dict, self.sim_dict["data_paht"] + "/" + "net_dict.json"
-            )
+            ### parameters (primary + derived, in one snapshot)
+            helpers.dict2json(self.P.model_dump(), self.P.data_path / "P.json")
 
             ### nodes (populations, readout neurons, recording/stimulus devices)
             nodes = {}
             for i, pop in enumerate(self.pops):
-                pop_name = self.net_dict["populations"][i]
+                pop_name = self.P.populations[i]
                 nodes[str(pop_name)] = pop.tolist()
 
             for i, spike_recorder in enumerate(self.spike_recorders):
-                pop_name = self.net_dict["populations"][i]
+                pop_name = self.P.populations[i]
                 nodes[f"spike_recorder_{pop_name}"] = spike_recorder.tolist()
 
-            helpers.dict2json(nodes, self.sim_dict["data_paht"] + "/" + "nodes.json")
+            helpers.dict2json(nodes, self.P.data_path / "nodes.json")
 
             ### python packages and versions
             os.system(
                 "pip freeze > requirements.txt; mv requirements.txt %s"
-                % self.sim_dict["data_paht"]
+                % self.P.data_path
             )
 
             ### store system metadata
-            # os.system('cd %s; gathermetadata system_metadata' % self.sim_dict['data_path'])
+            # os.system('cd %s; gathermetadata system_metadata' % self.P.data_path)
 
     def simulate(self, t_sim):
         """Simulates the microcircuit.
@@ -237,7 +200,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 "spike_recorder",
                 raster_plot_interval[0],
                 raster_plot_interval[1],
-                self.net_dict["N_scaling"],
+                self.P.N_scaling,
             )
 
             print(
@@ -249,124 +212,7 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 firing_rates_interval[0],
                 firing_rates_interval[1],
             )
-            helpers.boxplot(self.data_path, self.net_dict["populations"])
-
-    def __derive_parameters(self):
-        """
-        Derives and adjusts parameters and stores them as class attributes.
-        """
-        self.num_pops = len(self.net_dict["populations"])
-
-        # total number of synapses between neuronal populations before scaling
-        full_num_synapses = helpers.num_synapses_from_conn_probs(
-            self.net_dict["conn_probs"],
-            self.net_dict["full_num_neurons"],
-            self.net_dict["full_num_neurons"],
-        )
-
-        # scaled numbers of neurons and synapses
-        self.num_neurons = np.round(
-            (self.net_dict["full_num_neurons"] * self.net_dict["N_scaling"])
-        ).astype(int)
-        self.num_synapses = np.round(
-            (
-                full_num_synapses
-                * self.net_dict["N_scaling"]
-                * self.net_dict["K_scaling"]
-            )
-        ).astype(int)
-        self.ext_indegrees = np.round(
-            (self.net_dict["K_CC_full"] * self.net_dict["K_scaling"])
-        ).astype(int)
-        # self.ext_indegrees = np.round((self.net_dict["K_CC_full"])).astype(int) # why scale external inputs?
-
-        # conversion from PSPs to PSCs
-        PSC_over_PSP = helpers.postsynaptic_potential_to_current(
-            self.net_dict["neuron_params"]["C_m"],
-            self.net_dict["neuron_params"]["tau_m"],
-            self.net_dict["neuron_params"]["tau_syn"],
-        )
-        PSC_matrix_mean = self.net_dict["PSP_matrix_mean"] * PSC_over_PSP
-        PSC_ext = self.net_dict["weight_exc_mean"] * PSC_over_PSP
-
-        # DC input compensates for potentially missing Poisson input
-        if self.net_dict["CC_type"] == "poisson":
-            DC_amp = np.zeros(self.num_pops)
-        # else:
-        elif self.net_dict["CC_type"] == "dc":
-            # if nest.Rank() == 0: # default case should not raise a warning
-            # warnings.warn("DC input created to compensate missing Poisson input.\n")
-            DC_amp = helpers.dc_input_compensating_poisson(
-                self.net_dict["rate_CC"],
-                self.net_dict["K_CC_full"],
-                self.net_dict["neuron_params"]["tau_syn"],
-                PSC_ext,
-            )
-
-        # adjust weights and DC amplitude if the indegree is scaled
-        if self.net_dict["K_scaling"] != 1:
-            PSC_matrix_mean, PSC_ext, DC_amp = (
-                helpers.adjust_weights_and_input_to_synapse_scaling(
-                    self.net_dict["full_num_neurons"],
-                    full_num_synapses,
-                    self.net_dict["K_scaling"],
-                    PSC_matrix_mean,
-                    PSC_ext,
-                    self.net_dict["neuron_params"]["tau_syn"],
-                    self.net_dict["full_mean_rates"],
-                    DC_amp,
-                    self.net_dict["CC_type"],
-                    self.net_dict["rate_CC"],
-                    self.net_dict["K_CC_full"],
-                )
-            )
-
-            # check if all populations are supra-threshold with the changed DC input
-            if self.net_dict["CC_type"] == "dc":
-                I_rh = helpers.compute_rheo_base_current(
-                    self.net_dict["neuron_params"]["V_th"],
-                    self.net_dict["neuron_params"]["E_L"],
-                    self.net_dict["neuron_params"]["C_m"],
-                    self.net_dict["neuron_params"]["tau_m"],
-                )
-                for i, pop in enumerate(self.net_dict["populations"]):
-                    if DC_amp[i] < I_rh:
-                        warnings.warn(
-                            "\nPopulation {} is sub-threshold with downscaled DC input amplitude and may not fire. ".format(
-                                pop
-                            )
-                        )
-
-        # store final parameters as class attributes
-        self.weight_matrix_mean = PSC_matrix_mean
-        self.weight_ext = PSC_ext
-        self.DC_amp = DC_amp
-
-        # thalamic input
-        if self.stim_dict["thalamic_input"]:
-            num_th_synapses = helpers.num_synapses_from_conn_probs(
-                self.stim_dict["conn_probs_th"],
-                self.stim_dict["num_th_neurons"],
-                self.net_dict["full_num_neurons"],
-            )[0]
-            self.weight_th = self.P.weight_exc_mean * PSC_over_PSP
-            if self.net_dict["K_scaling"] != 1:
-                num_th_synapses *= self.net_dict["K_scaling"]
-                self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
-            self.num_th_synapses = np.round(num_th_synapses).astype(int)
-
-        if nest.Rank() == 0:
-            message = ""
-            if self.net_dict["N_scaling"] != 1:
-                message += "Neuron numbers are scaled by a factor of {:.3f}.\n".format(
-                    self.net_dict["N_scaling"]
-                )
-            if self.net_dict["K_scaling"] != 1:
-                message += "Indegrees are scaled by a factor of {:.3f}.".format(
-                    self.net_dict["K_scaling"]
-                )
-                message += "\n  Weights and DC input are adjusted to compensate.\n"
-            print(message)
+            helpers.boxplot(self.data_path, self.P.populations)
 
     def __setup_nest(self):
         """Initializes the NEST kernel.
@@ -375,11 +221,11 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
         """
         nest.ResetKernel()
 
-        nest.local_num_threads = self.sim_dict["local_num_threads"]
-        nest.resolution = self.sim_dict["sim_resolution"]
-        nest.rng_seed = self.sim_dict["rng_seed"]
-        nest.overwrite_files = self.sim_dict["overwrite_files"]
-        nest.print_time = self.sim_dict["print_time"]
+        nest.local_num_threads = self.P.local_num_threads
+        nest.resolution = self.P.sim_resolution
+        nest.rng_seed = self.P.rng_seed
+        nest.overwrite_files = self.P.overwrite_files
+        nest.print_time = self.P.print_time
 
         rng_seed = nest.rng_seed
         vps = nest.total_num_virtual_procs
@@ -401,32 +247,32 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             print("Creating neuronal populations.")
 
         self.pops = []
-        for i in np.arange(self.num_pops):
-            population = nest.Create(self.net_dict["neuron_model"], self.num_neurons[i])
+        for i in np.arange(self.P.num_pops):
+            population = nest.Create(self.P.neuron_model, self.P.num_neurons[i])
 
             population.set(
-                tau_syn_ex=self.net_dict["neuron_params"]["tau_syn"],
-                tau_syn_in=self.net_dict["neuron_params"]["tau_syn"],
-                E_L=self.net_dict["neuron_params"]["E_L"],
-                V_th=self.net_dict["neuron_params"]["V_th"],
-                V_reset=self.net_dict["neuron_params"]["V_reset"],
+                tau_syn_ex=self.P.tau_syn,
+                tau_syn_in=self.P.tau_syn,
+                E_L=self.P.E_L,
+                V_th=self.P.V_th,
+                V_reset=self.P.V_reset,
                 # NEST's iaf_psc_exp kwarg is fixed as `t_ref`, unlike renamed field
-                t_ref=self.net_dict["neuron_params"]["tau_ref"],
-                I_e=self.DC_amp[i],
+                t_ref=self.P.tau_ref,
+                I_e=self.P.DC_amp[i],
             )
 
-            if self.net_dict["V0_type"] == "optimized":
+            if self.P.V0_type == "optimized":
                 population.set(
                     V_m=nest.random.normal(
-                        self.net_dict["neuron_params"]["V0_mean"]["optimized"][i],
-                        self.net_dict["neuron_params"]["V0_std"]["optimized"][i],
+                        self.P.V0_mean_optimized[i],
+                        self.P.V0_std_optimized[i],
                     )
                 )
-            elif self.net_dict["V0_type"] == "original":
+            elif self.P.V0_type == "original":
                 population.set(
                     V_m=nest.random.normal(
-                        self.net_dict["neuron_params"]["V0_mean"]["original"],
-                        self.net_dict["neuron_params"]["V0_std"]["original"],
+                        self.P.V0_mean_original,
+                        self.P.V0_std_original,
                     )
                 )
             else:
@@ -447,13 +293,13 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
     def __create_recording_devices(self):
         """Creates one recording device of each kind per population.
 
-        Only devices which are given in ``sim_dict['rec_dev']`` are created.
+        Only devices which are given in ``P.rec_dev`` are created.
 
         """
         if nest.Rank() == 0:
             print("Creating recording devices.")
 
-        if "spike_recorder" in self.sim_dict["rec_dev"]:
+        if "spike_recorder" in self.P.rec_dev:
             if nest.Rank() == 0:
                 print("  Creating spike recorders.")
             sd_dict = {
@@ -461,19 +307,21 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                 "label": os.path.join(self.data_path, "spike_recorder"),
             }
             self.spike_recorders = nest.Create(
-                "spike_recorder", n=self.num_pops, params=sd_dict
+                "spike_recorder", n=self.P.num_pops, params=sd_dict
             )
 
-        if "voltmeter" in self.sim_dict["rec_dev"]:
+        if "voltmeter" in self.P.rec_dev:
             if nest.Rank() == 0:
                 print("  Creating voltmeters.")
             vm_dict = {
-                "interval": self.sim_dict["rec_V_int"],
+                "interval": self.P.rec_V_int,
                 "record_to": "ascii",
                 "record_from": ["V_m"],
                 "label": os.path.join(self.data_path, "voltmeter"),
             }
-            self.voltmeters = nest.Create("voltmeter", n=self.num_pops, params=vm_dict)
+            self.voltmeters = nest.Create(
+                "voltmeter", n=self.P.num_pops, params=vm_dict
+            )
 
     def __create_poisson_bg_input(self):
         """Creates the Poisson generators for ongoing background input if
@@ -486,12 +334,12 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
         if nest.Rank() == 0:
             print("Creating Poisson generators for background input.")
 
-        self.poisson_bg_input = nest.Create("poisson_generator", n=self.num_pops)
-        self.poisson_bg_input.rate = self.net_dict["rate_CC"] * self.ext_indegrees
+        self.poisson_bg_input = nest.Create("poisson_generator", n=self.P.num_pops)
+        self.poisson_bg_input.rate = self.P.rate_CC * self.P.ext_indegrees
 
     def __create_thalamic_stim_input(self):
         """Creates the thalamic neuronal population if specified in
-        ``stim_dict``.
+        ``P``.
 
         Each neuron of the thalamic population is supposed to transmit the same
         Poisson spike train to all of its targets in the cortical neuronal population,
@@ -509,37 +357,34 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
         if nest.Rank() == 0:
             print("Creating thalamic input for external stimulation.")
 
-        self.thalamic_population = nest.Create(
-            "parrot_neuron", n=self.stim_dict["num_th_neurons"]
-        )
+        self.thalamic_population = nest.Create("parrot_neuron", n=self.P.num_th_neurons)
 
         self.poisson_th = nest.Create("poisson_generator")
         self.poisson_th.set(
-            rate=self.stim_dict["th_rate"],
-            start=self.stim_dict["th_start"],
-            stop=(self.stim_dict["th_start"] + self.stim_dict["th_duration"]),
+            rate=self.P.th_rate,
+            start=self.P.th_start,
+            stop=(self.P.th_start + self.P.th_duration),
         )
 
     def __create_dc_stim_input(self):
         """Creates DC generators for external stimulation if specified
-        in ``stim_dict``.
+        in ``P``.
 
-        The final amplitude is the ``stim_dict['dc_amp'] * net_dict['K_CC_full']``.
+        The final amplitude is the ``P.dc_amp * P.K_CC_full``.
 
         """
-        dc_amp_stim = self.stim_dict["dc_transient_amp"] * self.net_dict["K_CC_full"]
+        dc_amp_stim = self.P.dc_transient_amp * self.P.K_CC_full
 
         if nest.Rank() == 0:
             print("Creating DC generators for external stimulation.")
 
         dc_dict = {
             "amplitude": dc_amp_stim,
-            "start": self.stim_dict["dc_transient_start"],
-            "stop": self.stim_dict["dc_transient_start"]
-            + self.stim_dict["dc_transient_dur"],
+            "start": self.P.dc_transient_start,
+            "stop": self.P.dc_transient_start + self.P.dc_transient_dur,
         }
         self.dc_stim_input = nest.Create(
-            "dc_generator", n=self.num_pops, params=dc_dict
+            "dc_generator", n=self.P.num_pops, params=dc_dict
         )
 
     def __connect_neuronal_populations(self):
@@ -549,17 +394,15 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
 
         for i, target_pop in enumerate(self.pops):
             for j, source_pop in enumerate(self.pops):
-                ## this case distinction would not have been necessary if nest.random.normal(mean,std) permitted std=0
-                if self.net_dict["delay_rel_std"] == 0:
-                    delay = self.net_dict["delay_matrix_mean"][i][j]
+                ## this case distinction would not have been necessary if
+                ## nest.random.normal(mean,std) permitted std=0
+                if self.P.delay_rel_std == 0:
+                    delay = self.P.delay_matrix_mean[i][j]
                 else:
                     delay = nest.math.redraw(
                         nest.random.normal(
-                            mean=self.net_dict["delay_matrix_mean"][i][j],
-                            std=(
-                                self.net_dict["delay_matrix_mean"][i][j]
-                                * self.net_dict["delay_rel_std"]
-                            ),
+                            mean=self.P.delay_matrix_mean[i][j],
+                            std=(self.P.delay_matrix_mean[i][j] * self.P.delay_rel_std),
                         ),
                         min=nest.resolution - 0.5 * nest.resolution,
                         max=np.inf,
@@ -568,13 +411,13 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                     # https://nest-simulator.readthedocs.io/en/latest/nest_behavior
                     # /random_numbers.html#rounding-effects-when-randomizing-delays
 
-                if self.num_synapses[i][j] >= 0.0:
+                if self.P.num_synapses[i][j] >= 0.0:
                     conn_dict_rec = {
                         "rule": "fixed_total_number",
-                        "N": self.num_synapses[i][j],
+                        "N": self.P.num_synapses[i][j],
                     }
 
-                    if self.weight_matrix_mean[i][j] < 0:
+                    if self.P.PSC_matrix_mean[i][j] < 0:
                         w_min = -np.inf
                         w_max = 0.0
                     else:
@@ -585,10 +428,9 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
                         "synapse_model": "static_synapse",
                         "weight": nest.math.redraw(
                             nest.random.normal(
-                                mean=self.weight_matrix_mean[i][j],
+                                mean=self.P.PSC_matrix_mean[i][j],
                                 std=abs(
-                                    self.weight_matrix_mean[i][j]
-                                    * self.net_dict["weight_cv"]
+                                    self.P.PSC_matrix_mean[i][j] * self.P.weight_cv
                                 ),
                             ),
                             min=w_min,
@@ -609,9 +451,9 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
             print("Connecting recording devices.")
 
         for i, target_pop in enumerate(self.pops):
-            if "spike_recorder" in self.sim_dict["rec_dev"]:
+            if "spike_recorder" in self.P.rec_dev:
                 nest.Connect(target_pop, self.spike_recorders[i])
-            if "voltmeter" in self.sim_dict["rec_dev"]:
+            if "voltmeter" in self.P.rec_dev:
                 nest.Connect(self.voltmeters[i], target_pop)
 
     def __connect_poisson_bg_input(self):
@@ -624,8 +466,8 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
 
             syn_dict_poisson = {
                 "synapse_model": "static_synapse",
-                "weight": self.weight_ext,
-                "delay": self.net_dict["delay_CC"],
+                "weight": self.P.PSC_ext,
+                "delay": self.P.delay_CC,
             }
 
             nest.Connect(
@@ -645,13 +487,16 @@ Storing simulation metadata to {self.sim_dict["data_paht"]}
 
         # connect thalamic population to neuronal populations
         for i, target_pop in enumerate(self.pops):
-            conn_dict_th = {"rule": "fixed_total_number", "N": self.num_th_synapses[i]}
+            conn_dict_th = {
+                "rule": "fixed_total_number",
+                "N": self.P.num_th_synapses[i],
+            }
 
             syn_dict_th = {
                 "weight": nest.math.redraw(
                     nest.random.normal(
-                        mean=self.weight_th,
-                        std=self.weight_th * self.net_dict["weight_cv"],
+                        mean=self.P.weight_th,
+                        std=self.P.weight_th * self.P.weight_cv,
                     ),
                     min=0.0,
                     max=np.inf,
