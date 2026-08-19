@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# network.py
+# run_microcircuit.py
 #
 # This file is part of NEST.
 #
@@ -33,17 +33,11 @@ import time
 import nest
 import numpy as np
 
-## import model implementation
 ## from microcircuit import network
 from microcircuit.model import Model
 
 ## import parameter definitions
 from microcircuit.parameter_definitions import Parameters
-
-## import (default) parameters (network, simulation, stimulus)
-# from microcircuit.network_params import default_net_dict as net_dict
-# from microcircuit.sim_params import default_sim_dict as sim_dict
-# from microcircuit.stimulus_params import default_stim_dict as stim_dict
 
 #####################
 
@@ -53,45 +47,38 @@ P = Parameters()
 scaling_factor = 0.2
 P.N_scaling = scaling_factor
 P.K_scaling = scaling_factor
-# net_dict["N_scaling"] = scaling_factor
-# net_dict["K_scaling"] = scaling_factor
 
 ## set path for storing spike data and figures
 P.data_path = "data_scale_%.2f/" % scaling_factor
-# sim_dict["data_path"] = "data_scale_%.2f/" % scaling_factor
 
 
 def main():
-
     ## start timer
     time_start = time.time()
 
     ## create instance of the model
     model = Model(P)
-    # net = network.Network(sim_dict, net_dict, stim_dict)
-
-    stop
 
     time_network = time.time()
 
     ## create all nodes (neurons, devices)
-    net.create()
+    model.create()
     time_create = time.time()
 
     ## connect nework
-    net.connect()
+    model.connect()
     time_connect = time.time()
 
     ## pre-simulation (warm-up phase)
-    net.simulate(sim_dict["t_presim"])
+    model.simulate(P.t_presim)
     time_presimulate = time.time()
 
     ## simulation
-    net.simulate(sim_dict["t_sim"])
+    model.simulate(P.t_sim)
     time_simulate = time.time()
 
     ## store metadata
-    net.store_metadata()
+    model.store_metadata()
 
     ## current memory consumption of the python process (in MB)
     import psutil
@@ -103,19 +90,11 @@ def main():
     print()
     print("##########################################")
     print()
-    observation_interval = np.array(
-        [sim_dict["t_presim"], sim_dict["t_presim"] + sim_dict["t_sim"]]
-    )
-    net.evaluate(observation_interval, observation_interval)
+    observation_interval = np.array([P.t_presim, P.t_presim + P.t_sim])
+    model.evaluate(observation_interval, observation_interval)
     print()
-    print(
-        "Raster plot                  : see %s "
-        % (sim_dict["data_path"] + "raster_plot.png")
-    )
-    print(
-        "Distributions of firing rates: see %s "
-        % (sim_dict["data_path"] + "box_plot.png")
-    )
+    print("Raster plot                  : see %s " % (P.data_path / "raster_plot.png"))
+    print("Distributions of firing rates: see %s " % (P.data_path / "box_plot.png"))
     time_evaluate = time.time()
 
     #####################

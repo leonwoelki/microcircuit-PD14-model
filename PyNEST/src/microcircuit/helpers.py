@@ -572,7 +572,7 @@ def __gather_metadata(path, name):
                 sd_names.append(fnsplit)
 
     # load node IDs
-    node_idfile = open(path + "population_nodeids.dat", "r")
+    node_idfile = open(path / "population_nodeids.dat", "r")
     node_ids = []
     for node_id in node_idfile:
         node_ids.append(node_id.split())
@@ -606,7 +606,9 @@ def __load_spike_times(path, name, begin, end):
     """
     sd_files, sd_names, node_ids = __gather_metadata(path, name)
     data = {}
-    dtype = {"names": ("sender", "time_ms"), "formats": ("i4", "f8")}  # as in header
+    dtype = np.dtype(
+        {"names": ("sender", "time_ms"), "formats": ("i4", "f8")}
+    )  # as in header
     for i, name in enumerate(sd_names):
         data_i_raw = np.array([[]], dtype=dtype)
         for j, f in enumerate(sd_files):
