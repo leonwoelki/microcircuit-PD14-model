@@ -20,32 +20,30 @@ import matplotlib.pyplot as plt
 import random
 
 ## import model implementation
-from microcircuit import network
 from microcircuit import helpers
 
-## import (default) parameters (network, simulation, stimulus)
-from microcircuit.network_params import default_net_dict as net_dict
-from microcircuit.sim_params import default_sim_dict as sim_dict
-from microcircuit.stimulus_params import default_stim_dict as stim_dict
+## import parameter class
+from microcircuit.parameter_definitions import Parameters
 
 ## import analysis parameters
 from params import params as ref_dict
 
 #####################
-populations = net_dict['populations'] # list of populations
+P = Parameters()
+populations = P.populations # list of populations
 #####################
 
 ## set network scale
 scaling_factor = ref_dict['scaling_factor']
-net_dict["N_scaling"] = scaling_factor
-net_dict["K_scaling"] = scaling_factor
+P.N_scaling = scaling_factor
+P.K_scaling = scaling_factor
 
-sim_dict['data_path'] = ref_dict['data_path'] + '/data_T' + str( int( ref_dict['t_sim'] * 1.0e-3 ) ) + 's/'
+P.data_path = ref_dict['data_path'] + '/data_T' + str( int( ref_dict['t_sim'] * 1.0e-3 ) ) + 's/'
 
 
 ## set path for storing spike data and figures
 ### TODO revise data path
-#sim_dict['data_path'] = '../examples/data_scale_%.2f/' % scaling_factor
+#P.data_path = '../examples/data_scale_%.2f/' % scaling_factor
 seeds = ref_dict['RNG_seeds'] # list of seeds
 
 ########################################################################################################################
@@ -149,7 +147,7 @@ def compute_data_dist( observable: dict, observable_name: str, observable_limits
             observable_hist_mat[cpop][cseed] = observable_hist / stats['sample_size'] # store relative histogram in histogram matrix
             observable_stats[cseed][pop] = stats # store statistics
 
-    helpers.dict2json( observable_stats, sim_dict['data_path'] + f'{observable_name}_stats.json' ) # save statistics as json file
+    helpers.dict2json( observable_stats, str(P.data_path) + f'{observable_name}_stats.json' ) # save statistics as json file
 
     return observable_hist_mat, observable_best_bins, observable_stats
 
@@ -189,7 +187,7 @@ def plot_data_dists( observable_name: str, x_label: str, observable_hist_mat: di
     rcParams['text.usetex']       = False 
     rcParams['legend.framealpha'] = 1.0
     rcParams['legend.edgecolor']  = 'k'
-    data_path = sim_dict['data_path']
+    data_path = str(P.data_path)
 
     x_max_hist = 0
     x_min_hist = 0
@@ -297,7 +295,7 @@ def plot_data_dists( observable_name: str, x_label: str, observable_hist_mat: di
     
 
 def main():
-    data_path = sim_dict['data_path']
+    data_path = str(P.data_path)
 
     # Read in the data from json files
     rates = helpers.json2dict( f'{data_path}rates.json' )

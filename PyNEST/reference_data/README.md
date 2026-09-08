@@ -101,6 +101,6 @@ For convenience, we provide sets of simulated and ananlyzed reference data for d
 
 The spike data is stored in text files `data_T<sim_time_in_s>s/seed-<RNGseed>/spike_recorder-<rec-id>-<thread-id>.dat` (1st column: neuron ID, 2nd column: spike time in ms).
 Here, `<sim_time_in_s>` refers to the simulation time in seconds, `<RNGseed>` to the random number generator seed used to generate a specific realization of the model, `<rec-id>` to the population specific spike-recorder ID, and `<thread-id>` to the thread ID.
-Each subfolder in addition contains metadata documenting the node IDs for each neuron population (`nodes.json`), the complete sets of model and simulation parameters (`sim_dict.json`, `net_dict.json`, `stim_dict.json`), as well as the results of the data analysis for each network realization (`rates.json`, `spikes_cvs.json`, `spikes_ccs.json`).
+Each subfolder in addition contains metadata documenting the node IDs for each neuron population (`nodes.json`), the complete set of model and simulation parameters (`P.json`), as well as the results of the data analysis for each network realization (`rates.json`, `spikes_cvs.json`, `spikes_ccs.json`).
 The results of the data analysis describing the statistics of the respective ensemble of network realizations (seeds) are stored in `data_T<sim_time_in_s>s` (`rates.json`, `spikes_cvs.json`, `spikes_ccs.json`, `rate_ks_distances.json`, `spike_cvs_ks_distances.json`, `spike_ccs_ks_distances.json`). 
 
