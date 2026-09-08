@@ -10,11 +10,30 @@
 legacy dict-based derivation logic (formerly `Network.__derive_parameters()`
 in `network.py`, before that module was renamed to `model.py`).
 
-`_legacy_derive_parameters()` below is a frozen re-implementation of that
-method against the still-present legacy dicts (`network_params.py`,
-`stimulus_params.py`); it calls the same `helpers` functions the current
-`Parameters` computed fields call, so any numeric divergence points at an
-actual bug in the new derivation rather than an unrelated helper change.
+`network_params.py` and `stimulus_params.py` in this directory are the
+original legacy dict-based parameter files. They've been moved out of the
+shipped `microcircuit` package (they have no other purpose any more) and
+live here, next to the one test that still needs them, so that pytest's
+default import mode picks them up as plain sibling modules -- no package
+`__init__.py`, no `microcircuit.` prefix.
+
+`_legacy_derive_parameters()` below is a frozen re-implementation of
+`Network.__derive_parameters()` against those dicts. It does NOT call into `microcircuit.helpers` for its
+sub-calculations (`num_synapses_from_conn_probs`,
+`postsynaptic_potential_to_current`, `dc_input_compensating_poisson`,
+`adjust_weights_and_input_to_synapse_scaling`) -- those are frozen locally
+below (`_legacy_*`) too. `helpers.py` is live, shared code that both this
+test and the current `Parameters` computed fields depend on; if it called
+into the live module, a regression introduced inside `helpers.py` itself
+would be invisible here, since both sides of the comparison would go
+through the same (possibly broken) implementation. This bit us once
+already: an errant `.astype(int)` inside the live
+`num_synapses_from_conn_probs` truncated an intermediate float before
+scaling, shifting connection counts for 4 of 64 population pairs at
+non-default scaling -- and this test still passed, because both sides used
+the same buggy helper. Keep these frozen copies in sync with the actual
+math `main`'s legacy `Network.__derive_parameters()` used, not with
+whatever `helpers.py` currently does.
 """
 
 import copy
@@ -22,10 +41,53 @@ import copy
 import numpy as np
 import pytest
 
-from microcircuit import helpers
-from microcircuit.network_params import default_net_dict
 from microcircuit.parameter_definitions import Parameters
-from microcircuit.stimulus_params import default_stim_dict
+from network_params import default_net_dict
+from stimulus_params import default_stim_dict
+
+
+def _legacy_num_synapses_from_conn_probs(conn_probs, popsize1, popsize2):
+    prod = np.outer(popsize1, popsize2)
+    return np.log(1.0 - np.array(conn_probs)) / np.log((prod - 1.0) / prod)
+
+
+def _legacy_postsynaptic_potential_to_current(C_m, tau_m, tau_syn):
+    sub = 1.0 / (tau_syn - tau_m)
+    pre = tau_m * tau_syn / C_m * sub
+    frac = (tau_m / tau_syn) ** sub
+    return 1.0 / (pre * (frac**tau_m - frac**tau_syn))
+
+
+def _legacy_dc_input_compensating_poisson(rate_CC, K_CC_full, tau_syn, PSC_ext):
+    return rate_CC * K_CC_full * PSC_ext * tau_syn * 0.001
+
+
+def _legacy_adjust_weights_and_input_to_synapse_scaling(
+    full_num_neurons,
+    full_num_synapses,
+    K_scaling,
+    mean_PSC_matrix,
+    PSC_ext,
+    tau_syn,
+    full_mean_rates,
+    DC_amp,
+    CC_type,
+    rate_CC,
+    K_CC_full,
+):
+    PSC_matrix_new = mean_PSC_matrix / np.sqrt(K_scaling)
+    PSC_ext_new = PSC_ext / np.sqrt(K_scaling)
+
+    indegree_matrix = full_num_synapses / full_num_neurons[:, np.newaxis]
+    input_rec = np.sum(mean_PSC_matrix * indegree_matrix * full_mean_rates, axis=1)
+
+    DC_amp_new = DC_amp + 0.001 * tau_syn * (1.0 - np.sqrt(K_scaling)) * input_rec
+
+    if CC_type == "poisson":
+        input_ext = PSC_ext * K_CC_full * rate_CC
+        DC_amp_new += 0.001 * tau_syn * (1.0 - np.sqrt(K_scaling)) * input_ext
+
+    return PSC_matrix_new, PSC_ext_new, DC_amp_new
 
 
 def _legacy_derive_parameters(net_dict, stim_dict):
@@ -34,7 +96,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
 
     num_pops = len(net_dict["populations"])
 
-    full_num_synapses = helpers.num_synapses_from_conn_probs(
+    full_num_synapses = _legacy_num_synapses_from_conn_probs(
         net_dict["conn_probs"], net_dict["full_num_neurons"], net_dict["full_num_neurons"]
     )
 
@@ -44,7 +106,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
     ).astype(int)
     ext_indegrees = np.round(net_dict["K_ext"] * net_dict["K_scaling"]).astype(int)
 
-    PSC_over_PSP = helpers.postsynaptic_potential_to_current(
+    PSC_over_PSP = _legacy_postsynaptic_potential_to_current(
         net_dict["neuron_params"]["C_m"],
         net_dict["neuron_params"]["tau_m"],
         net_dict["neuron_params"]["tau_syn"],
@@ -55,7 +117,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
     if net_dict["bg_input_type"] == "poisson":
         DC_amp = np.zeros(num_pops)
     else:
-        DC_amp = helpers.dc_input_compensating_poisson(
+        DC_amp = _legacy_dc_input_compensating_poisson(
             net_dict["bg_rate"],
             net_dict["K_ext"],
             net_dict["neuron_params"]["tau_syn"],
@@ -63,7 +125,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
         )
 
     if net_dict["K_scaling"] != 1:
-        PSC_matrix_mean, PSC_ext, DC_amp = helpers.adjust_weights_and_input_to_synapse_scaling(
+        PSC_matrix_mean, PSC_ext, DC_amp = _legacy_adjust_weights_and_input_to_synapse_scaling(
             net_dict["full_num_neurons"],
             full_num_synapses,
             net_dict["K_scaling"],
@@ -77,7 +139,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
             net_dict["K_ext"],
         )
 
-    num_th_synapses = helpers.num_synapses_from_conn_probs(
+    num_th_synapses = _legacy_num_synapses_from_conn_probs(
         stim_dict["conn_probs_th"], stim_dict["num_th_neurons"], net_dict["full_num_neurons"]
     )[0]
     weight_th = stim_dict["PSP_th"] * PSC_over_PSP

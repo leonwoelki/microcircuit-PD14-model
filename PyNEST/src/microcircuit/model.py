@@ -325,10 +325,10 @@ Storing simulation metadata to {self.P.data_path}
 
     def __create_poisson_bg_input(self):
         """Creates the Poisson generators for ongoing background input if
-        specified in ``network_params.py``.
+        ``P.CC_type`` is ``"poisson"``.
 
-        If ``poisson_input`` is ``False``, DC input is applied for compensation
-        in ``create_neuronal_populations()``.
+        If ``CC_type`` is ``"dc"`` instead, DC input is applied for compensation
+        in ``__create_neuronal_populations()``.
 
         """
         if nest.Rank() == 0:
