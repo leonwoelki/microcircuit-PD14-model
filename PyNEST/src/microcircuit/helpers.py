@@ -105,9 +105,7 @@ def num_synapses_from_conn_probs(conn_probs, popsize1, popsize2):
         Matrix of synapse numbers.
     """
     prod = np.outer(popsize1, popsize2)
-    num_synapses = (
-        np.log(1.0 - np.array(conn_probs)) / np.log((prod - 1.0) / prod)
-    ).astype(int)
+    num_synapses = np.log(1.0 - np.array(conn_probs)) / np.log((prod - 1.0) / prod)
 
     return num_synapses
 
