@@ -272,7 +272,7 @@ def adjust_weights_and_input_to_synapse_scaling(
 #########################################################################
 
 
-def compute_rheo_base_current(V_th, E_L, C_m, tau_m):
+def compute_rheo_base_current(V_th, V_rest, C_m, tau_m):
     """Computes the rheobase current for a given threshold voltage, resting potential, membrane capacitance, and membrane time constant.
 
     The rheobase current is the minimum current required to bring the membrane potential to the threshold voltage.
@@ -281,7 +281,7 @@ def compute_rheo_base_current(V_th, E_L, C_m, tau_m):
     ----------
     V_th
         Threshold voltage (in mV).
-    E_L
+    V_rest
         Resting membrane potential (in mV).
     C_m
         Membrane capacitance (in pF).
@@ -294,7 +294,7 @@ def compute_rheo_base_current(V_th, E_L, C_m, tau_m):
         Rheobase current (in pA).
     """
 
-    I_rh = C_m * (V_th - E_L) / tau_m
+    I_rh = C_m * (V_th - V_rest) / tau_m
 
     return I_rh
 

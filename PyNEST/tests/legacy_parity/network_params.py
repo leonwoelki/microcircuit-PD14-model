@@ -104,7 +104,7 @@ net_dict = {
     # mean delay of inhibitory connections (in ms)
     "delay_inh_mean": 0.75,
     # CV of excitatory and inhibitory delays
-    "delay_rel_std": 0.5,
+    "delay_cv": 0.5,
     # type of constant background (cortico-cortical) input
     "bg_input_type": "dc",  # 'poisson' or 'dc'
     # indegree of external connections to the different populations (same order
@@ -143,7 +143,7 @@ net_dict = {
             "optimized": [5.36, 4.57, 4.74, 4.94, 4.94, 4.55, 5.46, 4.48],
         },
         # reset membrane potential of the neurons (in mV)
-        "E_L": -65.0,
+        "V_rest": -65.0,
         # threshold potential of the neurons (in mV)
         "V_th": -50.0,
         # membrane potential after a spike (in mV)

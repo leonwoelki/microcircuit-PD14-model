@@ -209,11 +209,7 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: adjust model code to the new parameterization used here
-    ## (in the old version, all neuron parameters were kept in a dictionary neuron_params, including the initial conditions)
-
-    ## TODO: rename variable into `V_rest`
-    E_L: float = Field(
+    V_rest: float = Field(
         default=-65.0,
         description=r"Resting potential.",
         json_schema_extra={
@@ -347,8 +343,7 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: rename variable into `delay_cv`
-    delay_rel_std: float = Field(
+    delay_cv: float = Field(
         default=0.5,
         ge=0,
         description=r"Coefficient of variation of delay distributions (ratio between standard deviation and mean).",
@@ -372,7 +367,6 @@ class Parameters(BaseModel):
         },
     )
 
-    ## TODO: adjust model code to the new parameterization used here
     V0_mean_original: float = Field(
         default=-58.0,
         description=r"Mean of initial membrane potentials in case V0_type = 'original'.",
@@ -734,7 +728,6 @@ class Parameters(BaseModel):
             .tolist()
         )
 
-    ## TODO: rename variable into `K_CC`
     @computed_field(
         description=r"Number of cortico-cortical inputs per neuron (in-degree) for each cortical populations $y$; $K_{\mathcal{C}_x}=\alpha_K \tilde{K}_{\mathcal{C}_x}$",
         json_schema_extra={
@@ -744,7 +737,7 @@ class Parameters(BaseModel):
         },
     )
     @property
-    def ext_indegrees(self) -> list:
+    def K_CC(self) -> list:
         return np.round(np.array(self.K_CC_full) * self.K_scaling).astype(int).tolist()
 
     @computed_field(
@@ -847,7 +840,7 @@ class Parameters(BaseModel):
         if self.CC_type != "dc":
             return []
         I_rh = helpers.compute_rheo_base_current(
-            self.V_th, self.E_L, self.C_m, self.tau_m
+            self.V_th, self.V_rest, self.C_m, self.tau_m
         )
         dc_amp = self._scaled_recurrent_weights_and_dc()[2]
         return [pop for pop, dc in zip(self.populations, dc_amp) if dc < I_rh]

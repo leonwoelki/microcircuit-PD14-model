@@ -343,7 +343,9 @@ def test_stimulus_stop_times_default():
     params = Parameters()
 
     assert params.th_stop == params.th_start + params.th_duration
-    assert params.dc_transient_stop == params.dc_transient_start + params.dc_transient_dur
+    assert (
+        params.dc_transient_stop == params.dc_transient_start + params.dc_transient_dur
+    )
     assert params.th_stop == 710.0
     assert params.dc_transient_stop == 750.0
 
@@ -355,7 +357,9 @@ def test_stimulus_stop_times_default():
         ("dc_transient_start", "dc_transient_dur", "dc_transient_stop"),
     ],
 )
-def test_stimulus_stop_times_track_primary_parameters(start_field, duration_field, stop_field):
+def test_stimulus_stop_times_track_primary_parameters(
+    start_field, duration_field, stop_field
+):
     params = Parameters()
 
     setattr(params, start_field, 100.0)
@@ -368,7 +372,10 @@ def test_I_CC_default():
     params = Parameters()
 
     assert params.I_CC == pytest.approx(
-        params.rate_CC * (params.weight_exc_mean / params.J_unit) * params.tau_syn * 0.001
+        params.rate_CC
+        * (params.weight_exc_mean / params.J_unit)
+        * params.tau_syn
+        * 0.001
     )
 
 
@@ -395,16 +402,16 @@ def test_I_CC_populations_tracks_K_CC_full():
 
     params.K_CC_full = [1.0] * len(params.populations)
 
-    assert params.I_CC_populations == [pytest.approx(params.I_CC)] * len(params.populations)
+    assert params.I_CC_populations == [pytest.approx(params.I_CC)] * len(
+        params.populations
+    )
 
 
 def test_num_neurons_rounds_rather_than_truncates():
     params = Parameters()
     params.N_scaling = 0.2
 
-    assert params.num_neurons == [
-        round(n * 0.2) for n in params.full_num_neurons
-    ]
+    assert params.num_neurons == [round(n * 0.2) for n in params.full_num_neurons]
     # regression check: 20683 * 0.2 = 4136.6, which truncates to 4136 but
     # rounds to 4137 -- catches a silent switch back to `.astype(int)`.
     assert params.num_neurons[0] == 4137
@@ -504,26 +511,26 @@ def test_num_synapses_tracks_primary_parameters(field_name):
     assert params.num_synapses != baseline
 
 
-def test_ext_indegrees_rounds_rather_than_truncates():
+def test_K_CC_rounds_rather_than_truncates():
     params = Parameters()
     params.K_scaling = 0.3
 
     # regression check: matches the `num_neurons` rounding fix -- must not
     # silently regress to `.astype(int)` truncation.
-    assert params.ext_indegrees == [round(k * 0.3) for k in params.K_CC_full]
+    assert params.K_CC == [round(k * 0.3) for k in params.K_CC_full]
 
 
 @pytest.mark.parametrize("field_name", ["K_CC_full", "K_scaling"])
-def test_ext_indegrees_tracks_primary_parameters(field_name):
+def test_K_CC_tracks_primary_parameters(field_name):
     params = Parameters()
-    baseline = params.ext_indegrees
+    baseline = params.K_CC
 
     if field_name == "K_CC_full":
         setattr(params, field_name, [2.0 * k for k in params.K_CC_full])
     else:
         setattr(params, field_name, 2.0 * params.K_scaling)
 
-    assert params.ext_indegrees != baseline
+    assert params.K_CC != baseline
 
 
 def test_PSC_ext_default_matches_unscaled_formula():
@@ -582,7 +589,7 @@ def test_subthreshold_populations_flags_when_dc_amp_too_low():
     params.weight_exc_mean = 1e-6  # collapses PSC_ext/DC_amp toward ~0
 
     I_rh = helpers.compute_rheo_base_current(
-        params.V_th, params.E_L, params.C_m, params.tau_m
+        params.V_th, params.V_reset, params.C_m, params.tau_m
     )
     assert I_rh > 0  # sanity: rheobase is positive with defaults
     assert set(params.subthreshold_populations) == set(params.populations)
@@ -593,8 +600,12 @@ def test_PSP_matrix_mean_exc_inh_pattern_and_doubled_entry():
     matrix = params.PSP_matrix_mean
 
     assert matrix[1][0] == pytest.approx(params.weight_exc_mean)  # exc column
-    assert matrix[1][1] == pytest.approx(params.weight_exc_mean * params.g)  # inh column
-    assert matrix[0][2] == pytest.approx(2.0 * params.weight_exc_mean)  # doubled L4E->L2/3E
+    assert matrix[1][1] == pytest.approx(
+        params.weight_exc_mean * params.g
+    )  # inh column
+    assert matrix[0][2] == pytest.approx(
+        2.0 * params.weight_exc_mean
+    )  # doubled L4E->L2/3E
 
 
 @pytest.mark.parametrize("field_name", ["weight_exc_mean", "g"])
@@ -666,7 +677,7 @@ def test_weight_th_scales_by_inverse_sqrt_K_scaling():
         "R_m",
         "full_num_synapses",
         "num_synapses",
-        "ext_indegrees",
+        "K_CC",
         "PSC_matrix_mean",
         "PSC_ext",
         "DC_amp",

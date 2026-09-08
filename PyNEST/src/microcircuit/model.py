@@ -253,7 +253,8 @@ Storing simulation metadata to {self.P.data_path}
             population.set(
                 tau_syn_ex=self.P.tau_syn,
                 tau_syn_in=self.P.tau_syn,
-                E_L=self.P.E_L,
+                # NEST's iaf_psc_exp kwarg is fixed as `E_L`, unlike renamed field
+                E_L=self.P.V_rest,
                 V_th=self.P.V_th,
                 V_reset=self.P.V_reset,
                 # NEST's iaf_psc_exp kwarg is fixed as `t_ref`, unlike renamed field
@@ -335,7 +336,7 @@ Storing simulation metadata to {self.P.data_path}
             print("Creating Poisson generators for background input.")
 
         self.poisson_bg_input = nest.Create("poisson_generator", n=self.P.num_pops)
-        self.poisson_bg_input.rate = self.P.rate_CC * self.P.ext_indegrees
+        self.poisson_bg_input.rate = self.P.rate_CC * self.P.K_CC
 
     def __create_thalamic_stim_input(self):
         """Creates the thalamic neuronal population if specified in
@@ -396,13 +397,13 @@ Storing simulation metadata to {self.P.data_path}
             for j, source_pop in enumerate(self.pops):
                 ## this case distinction would not have been necessary if
                 ## nest.random.normal(mean,std) permitted std=0
-                if self.P.delay_rel_std == 0:
+                if self.P.delay_cv == 0:
                     delay = self.P.delay_matrix_mean[i][j]
                 else:
                     delay = nest.math.redraw(
                         nest.random.normal(
                             mean=self.P.delay_matrix_mean[i][j],
-                            std=(self.P.delay_matrix_mean[i][j] * self.P.delay_rel_std),
+                            std=(self.P.delay_matrix_mean[i][j] * self.P.delay_cv),
                         ),
                         min=nest.resolution - 0.5 * nest.resolution,
                         max=np.inf,
@@ -504,7 +505,7 @@ Storing simulation metadata to {self.P.data_path}
                 "delay": nest.math.redraw(
                     nest.random.normal(
                         mean=self.P.delay_exc_mean,
-                        std=self.P.delay_exc_mean * self.P.delay_rel_std,
+                        std=self.P.delay_exc_mean * self.P.delay_cv,
                     ),
                     # resulting minimum delay is equal to resolution, see:
                     # https://nest-simulator.readthedocs.io/en/latest/nest_behavior

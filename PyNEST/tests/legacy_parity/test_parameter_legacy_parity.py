@@ -104,7 +104,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
     num_synapses = np.round(
         full_num_synapses * net_dict["N_scaling"] * net_dict["K_scaling"]
     ).astype(int)
-    ext_indegrees = np.round(net_dict["K_ext"] * net_dict["K_scaling"]).astype(int)
+    K_CC = np.round(net_dict["K_ext"] * net_dict["K_scaling"]).astype(int)
 
     PSC_over_PSP = _legacy_postsynaptic_potential_to_current(
         net_dict["neuron_params"]["C_m"],
@@ -157,7 +157,7 @@ def _legacy_derive_parameters(net_dict, stim_dict):
         "full_num_synapses": full_num_synapses,
         "num_neurons": num_neurons,
         "num_synapses": num_synapses,
-        "ext_indegrees": ext_indegrees,
+        "K_CC": K_CC,
         "PSC_matrix_mean": PSC_matrix_mean,
         "PSC_ext": PSC_ext,
         "DC_amp": DC_amp,
@@ -174,7 +174,7 @@ def _assert_matches_legacy(params, legacy):
     assert params.full_num_synapses == legacy["full_num_synapses"].tolist()
     assert params.num_neurons == legacy["num_neurons"].tolist()
     assert params.num_synapses == legacy["num_synapses"].tolist()
-    assert params.ext_indegrees == legacy["ext_indegrees"].tolist()
+    assert params.K_CC == legacy["K_CC"].tolist()
     assert np.array(params.PSC_matrix_mean) == pytest.approx(legacy["PSC_matrix_mean"])
     assert params.PSC_ext == pytest.approx(legacy["PSC_ext"])
     assert np.array(params.DC_amp) == pytest.approx(legacy["DC_amp"])
