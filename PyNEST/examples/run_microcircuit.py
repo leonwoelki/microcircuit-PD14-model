@@ -33,7 +33,6 @@ import time
 import nest
 import numpy as np
 
-## from microcircuit import network
 from microcircuit.model import Model
 
 ## import parameter definitions
