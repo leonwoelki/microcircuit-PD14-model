@@ -95,6 +95,30 @@ import microcircuit
 
 See [this example](https://microcircuit-pd14-model.readthedocs.io/en/latest/microcircuit_example.html) for a more detailed illustrations of how the package can be used.
 
+### Configuring via YAML
+
+Model, simulation, and stimulus parameters can also be set from a YAML file instead of in Python. Generate a template with every parameter and its description, unit, and default value as comments:
+
+```python
+from microcircuit.parameter_definitions import generate_example_config
+
+generate_example_config("params.yaml")
+```
+
+Edit the values you want to change, then load and validate the result:
+
+```python
+from microcircuit.model import Model
+from microcircuit.parameter_definitions import load_parameters_from_yaml
+
+P = load_parameters_from_yaml("params.yaml")
+model = Model(P)
+```
+
+`load_parameters_from_yaml()` validates the file against the same schema as `Parameters()` itself, so an unknown key, wrong type, or out-of-range value fails immediately at load time rather than surfacing later as a wrong simulation result. Derived parameters (e.g. `num_neurons`, `PSC_matrix_mean`) appear in the generated template as comments only — they're always recomputed from the primary parameters, never read back in.
+
+For setting parameters directly in Python instead — e.g. `P = Parameters(); P.N_scaling = 0.2` — see [this example](https://microcircuit-pd14-model.readthedocs.io/en/latest/microcircuit_example.html).
+
 ## Memory requirements
 
 | scaling factor (`= N_scaling = K_scaling`)  | Memory    |
