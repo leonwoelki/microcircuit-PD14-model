@@ -37,7 +37,7 @@ args = parser.parse_args()
 
 path = Path(args.path)
 P = Parameters()
-P.data_path = str(path) + "/"
+P.data_path = path
 P.rng_seed = args.seed
 
 #####################
@@ -80,8 +80,8 @@ def analyze_single_neuron_stats(observable_name: str, func: callable) -> dict:
         ref_dict["t_presim"] + ref_dict["t_sim"],
     )
 
-    data_path = str(P.data_path)
-    nodes = helpers.json2dict(data_path + "nodes.json")
+    data_path = Path(P.data_path)
+    nodes = helpers.json2dict(data_path / "nodes.json")
 
     for pop in populations:
         observable[pop] = {}
@@ -97,7 +97,7 @@ def analyze_single_neuron_stats(observable_name: str, func: callable) -> dict:
         )  # compute single neuron statistic
 
     # store observable as json file
-    helpers.dict2json(observable, data_path + f"{observable_name}.json")
+    helpers.dict2json(observable, data_path / f"{observable_name}.json")
 
     return observable
 
@@ -127,8 +127,8 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
     # cc_binsize = 2. # in ms
     observable = {}  # list of pairwise spike count correlations [pop][correlation]
 
-    data_path = str(P.data_path)
-    nodes = helpers.json2dict(data_path + "nodes.json")
+    data_path = Path(P.data_path)
+    nodes = helpers.json2dict(data_path / "nodes.json")
 
     for pop in populations:
         observable[pop] = {}
@@ -151,7 +151,7 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
         )  # compute pairwise statistic
 
     helpers.dict2json(
-        observable, data_path + f"{observable_name}.json"
+        observable, data_path / f"{observable_name}.json"
     )  # store observable as json file
 
     return observable

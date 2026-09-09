@@ -39,18 +39,18 @@ To quantifiy the variability in the above computed spike statistics across the e
 These KS scores quantify the natural variability intrinsic to the model, and are useful when verifying other implementions of the model based on the reference ("ground truth") data provided here.
 For further details, see [(Dasbach et al., 2021)](https://doi.org/10.3389/fnins.2021.757790).
 
-This second step of the analysis, the quantification of the ensemble statistis, is implemented in [compute_ensemble_stats.py](compute_ensemble_stats.py).
+This second step of the analysis, the quantification of the ensemble statistis, is implemented in [compute_ensemble_statistics.py](compute_ensemble_statistics.py).
 
 Usage:
 ```bash
-python compute_ensemble_stats.py
+python compute_ensemble_statistics.py
 ```
 
 The script assumes that the data is organized as described below in section "Sets of simulated and analyzed reference data".
 
 ## Data visualization
 
-The script [plot_reference_analysis.py](plot_reference_analysis.py) visualizes the statistics extracted by [`analyze_reference_data.py`](analyze_reference_data.py) and [compute_ensemble_stats.py](compute_ensemble_stats.py), and produces the figures below.
+The script [plot_reference_analysis.py](plot_reference_analysis.py) visualizes the statistics extracted by [`analyze_reference_data.py`](analyze_reference_data.py) and [compute_ensemble_statistics.py](compute_ensemble_statistics.py), and produces the figures below.
 
 Usage:
 ```bash

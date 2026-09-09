@@ -18,6 +18,7 @@ import json
 from scipy.stats import ks_2samp as ks
 import matplotlib.pyplot as plt
 import random
+from pathlib import Path
 
 ## import model implementation
 from microcircuit import helpers
@@ -38,9 +39,7 @@ scaling_factor = ref_dict["scaling_factor"]
 P.N_scaling = scaling_factor
 P.K_scaling = scaling_factor
 
-P.data_path = (
-    ref_dict["data_path"] + "/data_T" + str(int(ref_dict["t_sim"] * 1.0e-3)) + "s/"
-)
+P.data_path = Path(ref_dict["data_path"]) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
 
 ## set path for storing spike data and figures
 seeds = ref_dict["RNG_seeds"]  # list of seeds
@@ -218,7 +217,7 @@ def compute_data_dist(
             observable_stats[cseed][pop] = stats  # store statistics
 
     helpers.dict2json(
-        observable_stats, str(P.data_path) + f"{observable_name}_stats.json"
+        observable_stats, Path(P.data_path) / f"{observable_name}_stats.json"
     )  # save statistics as json file
 
     return observable_hist_mat, observable_best_bins, observable_stats
@@ -271,7 +270,7 @@ def plot_data_dists(
     rcParams["text.usetex"] = False
     rcParams["legend.framealpha"] = 1.0
     rcParams["legend.edgecolor"] = "k"
-    data_path = str(P.data_path)
+    data_path = Path(P.data_path)
 
     x_max_hist = 0
     x_min_hist = 0
@@ -418,13 +417,13 @@ def plot_data_dists(
 
     fig_hist.text(0.5, -0.01, x_label, ha="center", va="center")
     fig_hist.savefig(
-        f"{data_path}{observable_name}_distributions.pdf",
+        data_path / f"{observable_name}_distributions.pdf",
         bbox_inches="tight",
         pad_inches=0.02,
     )
     fig_ks.text(0.5, 0.0, r"KS-distance", ha="center", va="center")
     fig_ks.savefig(
-        f"{data_path}{observable_name}_KS_distances.pdf",
+        data_path / f"{observable_name}_KS_distances.pdf",
         bbox_inches="tight",
         pad_inches=0.02,
     )
@@ -447,19 +446,19 @@ def plot_data_dists(
 
 
 def main():
-    data_path = str(P.data_path)
+    data_path = Path(P.data_path)
 
     # Read in the data from json files
-    rates = helpers.json2dict(f"{data_path}rates.json")
-    spike_cvs = helpers.json2dict(f"{data_path}spike_cvs.json")
-    spike_ccs = helpers.json2dict(f"{data_path}spike_ccs.json")
+    rates = helpers.json2dict(data_path / "rates.json")
+    spike_cvs = helpers.json2dict(data_path / "spike_cvs.json")
+    spike_ccs = helpers.json2dict(data_path / "spike_ccs.json")
 
-    rate_ks_distances = helpers.json2dict(f"{data_path}rate_ks_distances.json")
+    rate_ks_distances = helpers.json2dict(data_path / "rate_ks_distances.json")
     spike_cvs_ks_distances = helpers.json2dict(
-        f"{data_path}spike_cvs_ks_distances.json"
+        data_path / "spike_cvs_ks_distances.json"
     )
     spike_ccs_ks_distances = helpers.json2dict(
-        f"{data_path}spike_ccs_ks_distances.json"
+        data_path / "spike_ccs_ks_distances.json"
     )
 
     # Compute distributions and statistics

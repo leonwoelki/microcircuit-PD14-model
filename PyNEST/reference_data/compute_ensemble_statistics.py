@@ -19,6 +19,7 @@ import numpy as np
 import json
 from scipy.stats import ks_2samp as ks
 import random
+from pathlib import Path
 
 ## import model implementation
 from microcircuit import helpers
@@ -43,7 +44,7 @@ random.seed( ref_dict['seed_subsampling'] )  # set seed for reproducibility
 
 seeds = ref_dict['RNG_seeds'] # list of seeds
 
-P.data_path = ref_dict['data_path'] + '/data_T' + str( int( ref_dict['t_sim'] * 1.0e-3 ) ) + 's/'
+P.data_path = Path(ref_dict['data_path']) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
 
 #######################################################
 # Define auxiliary functions to analyze and plot data #
@@ -66,13 +67,13 @@ def concatenate_data( observable_name: str ) -> dict:
 
     for cseed, seed in enumerate( seeds ):
         observable[cseed] = {}
-        data_path = str(P.data_path) + 'seed-%s/' % seed
+        data_path = Path(P.data_path) / f'seed-{seed}'
 
-        data_per_seed = helpers.json2dict( f'{data_path}{observable_name}.json' ) # load data per seed as dictionary sorted by populations
+        data_per_seed = helpers.json2dict( data_path / f'{observable_name}.json' ) # load data per seed as dictionary sorted by populations
 
         observable[cseed] = data_per_seed # concatenate data
 
-    helpers.dict2json( observable, str(P.data_path) + f'{observable_name}.json' ) # store concatenated data as json file
+    helpers.dict2json( observable, Path(P.data_path) / f'{observable_name}.json' ) # store concatenated data as json file
 
     return observable
 
@@ -110,7 +111,7 @@ def compute_ks_distances( observable: dict, observable_name: str ) -> dict:
                 observable_ks_distances[pop]["seeds"][i][j] = observable_ks_distance
                 observable_ks_distances[pop]["list"].append( observable_ks_distance )
 
-    helpers.dict2json( observable_ks_distances, str(P.data_path) + f'{observable_name}_ks_distances.json' ) # save ks distances as json file
+    helpers.dict2json( observable_ks_distances, Path(P.data_path) / f'{observable_name}_ks_distances.json' ) # save ks distances as json file
 
     return observable_ks_distances
 
