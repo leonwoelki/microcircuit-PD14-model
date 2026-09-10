@@ -492,7 +492,7 @@ def boxplot(path, populations):
     rcParams["legend.framealpha"] = 1.0
     rcParams["legend.edgecolor"] = "k"
 
-    plt.figure(1)
+    plt.figure(2)
     plt.clf()
 
     bp = plt.boxplot(
