@@ -158,7 +158,7 @@ class Parameters(BaseModel):
         description=r"Type of cortico-cortical input ('poisson' or 'dc').",
         json_schema_extra={
             "unit": "",
-            "latex": r"bg\_input\_type",
+            "latex": r"CC\_type",
             "section": r"network",
         },
     )
@@ -216,7 +216,7 @@ class Parameters(BaseModel):
         description=r"Resting potential.",
         json_schema_extra={
             "unit": "mV",
-            "latex": r"V_\text{rest}",
+            "latex": r"$V_\text{rest}$",
             "section": r"neuron",
         },
     )
@@ -226,7 +226,7 @@ class Parameters(BaseModel):
         description=r"Spike threshold potential.",
         json_schema_extra={
             "unit": "mV",
-            "latex": r"$\theta$",
+            "latex": r"$V_\text{th}$",
             "section": r"neuron",
         },
     )
@@ -295,7 +295,7 @@ class Parameters(BaseModel):
         " (ratio between standard deviation and mean).",
         json_schema_extra={
             "unit": "",
-            "latex": r"$\text{CV}_\text{w}$",
+            "latex": r"$\text{CV}_\text{s}$",
             "section": r"synapse",
         },
     )
@@ -431,7 +431,7 @@ class Parameters(BaseModel):
         description=r"Onset time of thalamic input.",
         json_schema_extra={
             "unit": "ms",
-            "latex": r"$t_\text{start}$",
+            "latex": r"$t_\text{TC,start}$",
             "section": r"stimulus",
         },
     )
@@ -464,7 +464,7 @@ class Parameters(BaseModel):
         description=r"Number of thalamic neurons.",
         json_schema_extra={
             "unit": "",
-            "latex": r"$N_\text{TC}$",
+            "latex": r"$N_\mathcal{T}$",
             "section": r"stimulus",
         },
     )
@@ -532,7 +532,7 @@ class Parameters(BaseModel):
         description=r"Duration of presimulation (warmup).",
         json_schema_extra={
             "unit": "ms",
-            "latex": r"t\_presim$",
+            "latex": r"t\_presim",
             "section": r"simulation",
         },
     )
@@ -543,7 +543,7 @@ class Parameters(BaseModel):
         description=r"Duration of (main) simulation.",
         json_schema_extra={
             "unit": "ms",
-            "latex": r"t\_sim$",
+            "latex": r"t\_sim",
             "section": r"simulation",
         },
     )
@@ -554,7 +554,7 @@ class Parameters(BaseModel):
         description=r"Simulation time resolution.",
         json_schema_extra={
             "unit": "ms",
-            "latex": r"sim\_resolution$",
+            "latex": r"sim\_resolution",
             "section": r"simulation",
         },
     )
@@ -718,7 +718,7 @@ class Parameters(BaseModel):
         description=r"Total number of connections between neuronal populations, for each pair of presynaptic and postsynaptic cortical populations $x$ and $y$; $Q_{yx}=\alpha_N \alpha_K \tilde{Q}_{yx}$",
         json_schema_extra={
             "unit": "",
-            "latex": r"$Q_{yx}",
+            "latex": r"$Q_{yx}$",
             "section": r"network_derived",
         },
     )
@@ -734,7 +734,7 @@ class Parameters(BaseModel):
         description=r"Number of cortico-cortical inputs per neuron (in-degree) for each cortical populations $y$; $K_{\mathcal{C}_x}=\alpha_K \tilde{K}_{\mathcal{C}_x}$",
         json_schema_extra={
             "unit": "",
-            "latex": r"$K_{\mathcal{C}_x}",
+            "latex": r"$K_{\mathcal{C}_x}$",
             "section": r"network_derived",
         },
     )
@@ -812,11 +812,15 @@ class Parameters(BaseModel):
         return float(self._scaled_recurrent_weights_and_dc()[1])
 
     @computed_field(
-        description=r"DC input amplitude compensating for the potentially missing "
-        r"cortico-cortical Poisson input, for each cortical population $x$; "
-        r"$I_{\text{DC},x}=0$ if $\mathcal{C}_\text{type}=\text{poisson}$, else "
-        r"$I_{DC,x}=\nu_\mathcal{C}\,\tilde{K}_{\mathcal{C}_x}\,\bar{I}_\text{CC}\,\tau_\text{syn}\cdot 10^{-3}$, "
-        r"adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the input.",
+        description=r"DC input amplitude for each cortical population $x$, replacing the "
+        r"cortico-cortical Poisson input (if `CC_type='dc'`) and "
+        r"compensating for indegree scaling ($\alpha_K\neq 1$) such that the mean and "
+        r"variance of the total input are preserved; "
+        r"$I_{\text{DC},x}=I_{\mathcal{C}_x}+(1-\sqrt{\alpha_K})\,\mu_{x,\text{loc}}$ "
+        r"if `CC_type='dc'`, "
+        r"$I_{\text{DC},x}=(1-\sqrt{\alpha_K})\,(\mu_{x,\text{loc}}+I_{\mathcal{C}_x})$ "
+        r"if `CC_type='poisson'`, "
+        r"with the mean local synaptic input current $\mu_{x,\text{loc}}$ of the full-scale network.",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_{\text{DC},x}$",
@@ -830,10 +834,10 @@ class Parameters(BaseModel):
     @computed_field(
         description=r"Cortical populations whose (indegree-scaling-adjusted) DC input "
         r"amplitude falls below the rheobase current; always empty unless "
-        r"$\mathcal{C}_\text{type}=\text{dc}$.",
+        r"`CC_type='dc'`.",
         json_schema_extra={
             "unit": "",
-            "latex": r"\{x : I_{DC,x} < I_\text{rh}\}",
+            "latex": r"$\{x : I_{\text{DC},x} < I_\text{rh}\}$",
             "section": r"neuron_derived",
         },
     )
@@ -951,12 +955,12 @@ class Parameters(BaseModel):
 
     @computed_field(
         description=r"Mean current generated by a single cortico-cortical "
-        r"input spike train with rate $\nu_\mathcal{C}$, convolved with an "
+        r"input spike train with rate $\nu_\text{CC}$, convolved with an "
         r"exponential kernel of amplitude $\bar{I}_\text{CC}$ and time "
-        r"constant $\tau_\text{syn}$;"
-        r"$I_\text{CC}=\bar{I}_\text{CC}\,\tau_\text{syn}\,\nu_\mathcal{C}\cdot 10^{-3}$. "
+        r"constant $\tau_\text{s}$; "
+        r"$I_\text{CC}=\bar{I}_\text{CC}\,\tau_\text{s}\,\nu_\text{CC}$. "
         r"Always computed at full (unscaled) amplitude, independent of "
-        r"$\mathcal{C}_\text{type}$ or indegree scaling.",
+        r"`CC_type` or indegree scaling.",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_\text{CC}$",
@@ -980,7 +984,7 @@ class Parameters(BaseModel):
         r"onto each cortical population $x$; "
         r"$I_{\mathcal{C}_x}=\tilde{K}_{\mathcal{C}_x}\,I_\text{CC}$. "
         r"Always computed at full (unscaled) amplitude, independent of "
-        r"$\mathcal{C}_\text{type}$ or indegree scaling.",
+        r"`CC_type` or indegree scaling.",
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_{\mathcal{C}_x}$",
@@ -993,10 +997,10 @@ class Parameters(BaseModel):
 
     @computed_field(
         description=r"Stop time of thalamic input; "
-        r"$t_\text{stop}^\text{TC}=t_\text{start}+\Delta_\text{TC}$.",
+        r"$t_\text{TC,stop}=t_\text{TC,start}+\Delta_\text{TC}$.",
         json_schema_extra={
             "unit": "ms",
-            "latex": r"$t_\text{stop}^\text{TC}$",
+            "latex": r"$t_\text{TC,stop}$",
             "section": r"stimulus_derived",
         },
     )

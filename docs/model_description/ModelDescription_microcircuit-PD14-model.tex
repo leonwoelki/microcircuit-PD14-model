@@ -350,7 +350,7 @@ The description follows the guidelines of \citet{Nordlie09_e1000456}.
         \item[] (see App.\,\ref{sec:normal_form} for the normal form of the combined subthreshold neuron-synapse dynamics)	
 	\item solution of \eqref{eq:synaptic_current} for $\displaystyle f_{ij}(t)=\hat{I}_{ij}s_{j}(t)$ and $I_{ij}(t=0)=0$:
 		\begin{equation}
-			\text{PSC}_{ij}(t)=\hat{I}_{ij} \exp(-t/\tauS) V_\text{th}(t)
+			\text{PSC}_{ij}(t)=\hat{I}_{ij} \exp(-t/\tauS)\Theta(t)
 		\end{equation}
 		with Heaviside function $\Theta(\cdot)$
 	\item[$\curvearrowright$] (exponential decaying) postsynaptic current triggered by a single presynaptic spike 
@@ -419,8 +419,7 @@ The description follows the guidelines of \citet{Nordlie09_e1000456}.
   \begin{equation}
       d_{ij} = \begin{cases} 
 	      \text{max}(d_\text{min},z_{yx}), & \forall i,\ \forall j \in x\in\{\mathcal{E}_{23},\ldots,\mathcal{I}_{6},\mathcal{T}\} \\
-                 %\bar{d}_{yx}, & \forall i,\ \forall j \in x=\mathcal{C}_y \\
-                 \bar{d}_\text{CC}, & \forall i,\ \forall j \in x=\mathcal{C}_y \\                 
+      	\bar{d}_{yx}, & \forall i,\ \forall j \in x=\mathcal{C}_y \\
       \end{cases}
   \end{equation}
   with
@@ -596,12 +595,14 @@ $J$ & $0.15\mV$ & (mean) weight (PSP amplitude) of excitatory synapses\\
 	& \drvd{$2J/J_{\text{unit}}$} & $\left(x,y\right)=\left(\mathcal{E}_{23}, \mathcal{E}_{4}\right)$\\
 	& \drvd{$-4J/J_{\text{unit}}$} & $\forall x\in\left\{ \mathcal{I}_{23}, \mathcal{I}_{4}, \mathcal{I}_{5}, \mathcal{I}_{6}\right\}$,  $\forall y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\mathcal{I}_{23},\mathcal{I}_{4},\mathcal{I}_{5},\mathcal{I}_{6}\right\}$\\
 \hline
-$\sigma_{\text{s},yx}$ & $0.1\cdot \bar{I}_{yx}$ & standard deviation of weight distribution\\
+$\text{CV}_\text{s}$ & $0.1$ & coefficient of variation of weight distribution\\
+\hline
+\drvd{$\sigma_{\text{s},yx}$} & \drvd{$\text{CV}_\text{s}\cdot \bar{I}_{yx}$} & standard deviation of weight distribution\\
 \hline
 $\tau_{\text{s}}$ & $0.5\ms$ &  synaptic time constant \\
 \hline
 $\bar{d}_{yx}$ &  & mean spike transmission delays\\
-              & $1.5\ms$ & $x\in\left\{ \mathcal{E}_{23}, \mathcal{E}_{4}, \mathcal{E}_{5}, \mathcal{E}_{6},\mathcal{T}\right\} $,
+              & $1.5\ms$ & $x\in\left\{ \mathcal{E}_{23}, \mathcal{E}_{4}, \mathcal{E}_{5}, \mathcal{E}_{6},\mathcal{T},\mathcal{C}_y\right\} $,
 $y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\mathcal{I}_{23},\mathcal{I}_{4},\mathcal{I}_{5},\mathcal{I}_{6}\right\}$
   \\
  & $0.75\ms$ & $x\in\left\{ \mathcal{I}_{23}, \mathcal{I}_{4}, \mathcal{I}_{5}, \mathcal{I}_{6}\right\}$, 
@@ -620,8 +621,6 @@ $y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\ma
   \drvd{$\sigma_{\text{d},yx}$} & \drvd{$\text{CV}_\text{d}\cdot\bar{d}_{yx}$} & standard deviation of spike transmission delays\\
   \hline
   $d_\text{min}$      & $0.1\ms$      & minimal spike transmission delay\\
-  \hline
-  $\bar{d}_\text{CC}$ & $1.5\ms$ & spike transmission delay for cortico-cortical inputs\\  
 \hline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 \multicolumn{3}{|>{\color{black}\columncolor{lightgray}}c|}{\textbf{Initial conditions}}\\
@@ -765,17 +764,17 @@ $y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\ma
   Downscaling the model enables running it in the presence of limited computing resources (e.g., on a laptop).
   The scaling of the synapse number affects both the connections within the local network and the external (cortico-cortical) inputs.
   %% 
-  Without any compensation, changing the number of synapses would change the statistics of the total input current
+  Without any compensation, changing the number of synapses would change the statistics of the total input current (local synaptic and cortico-cortical inputs)
   \begin{equation}
     \label{eq:total_synaptic_input_current}
-    I_i(t)=\sum_{x\in\{\mathcal{E}_{23},\ldots,\mathcal{I}_{6}\}} \sum_{j\in{}x} (s_j* \text{PSC}_{ij})(t-d_{ij}) + I_{\text{CC},i}
+    I_{\text{tot},i}(t)=\sum_{x\in\{\mathcal{E}_{23},\ldots,\mathcal{I}_{6}\}} \sum_{j\in{}x} (s_j* \text{PSC}_{ij})(t-d_{ij}) + I_{i,\mathcal{C}_y}
   \end{equation}
   for each postsynaptic neuron $i$ in population $y\in\{\mathcal{E}_{23},\ldots,\mathcal{I}_{6}\}$, and hence the firing statistics.
   In the PyNEST implementation provided \href{https://github.com/INM-6/microcircuit-PD14-model}{here}, this change in the activity statistics is suppressed by rescaling the average synaptic weights $\bar{I}_{yx}$ and injecting an additional constant input current into each neuron.
   In the following, we outline this compensation procedure.
   %%
   \par  
-  Under the assumption that the spike trains $s_j(t)$ can be described by stationary Poisson point processes with rates $\nu_j$, the mean and the variance of the total synaptic input current \cref{eq:total_synaptic_input_current} read\footnote{Here, we have absorbed the constant cortico-cortical input current $I_{\text{CC},i}$ into the sum across all presynaptic sources.}
+  Under the assumption that the spike trains $s_j(t)$ can be described by stationary Poisson point processes with rates $\nu_j$, the mean and the variance of the total synaptic input current \cref{eq:total_synaptic_input_current} read\footnote{Here, we have absorbed the constant cortico-cortical input current $I_{i,\mathcal{C}_y}$ into the sum across all presynaptic sources.}
   \begin{equation}
     \label{eq:mean_and_variances_synaptic_input}
       \mu_i      =             \tauS \sum_{x\in\{\mathcal{E}_{23},\ldots,\mathcal{I}_{6},\mathcal{C}_y\}} \sum_j \hat{I}_{ij}   \nu_j 
@@ -790,28 +789,28 @@ $y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\ma
     \sigma_y^2 = \langle\sigma_i^2\rangle_{i\in{}y}  = \frac{1}{2}\tauS \sum_x K_{yx} \bar{I}_{yx}^2 \nu_x  .
   \end{equation}
   Here, $K_{yx}$ refers to the average number of inputs a neuron in population $y$ receives from the presynaptic population $x$, and $\nu_x$ to the population averaged firing rate of neurons in population $x$.
-  Without further compensation, scaling the in-degrees $K_{yx}^*=fK_{yx}$ by some factor $f$ would evidently change  $\mu_y$ and $\sigma_y^2$.
+  Without further compensation, scaling the in-degrees $K_{yx}^*=\alpha_K K_{yx}$ by some factor $\alpha_K$ would evidently change  $\mu_y$ and $\sigma_y^2$.
   However, if we rescale the synaptic weights according to
   \begin{equation}
-    \bar{I}_{yx}^*=\frac{\bar{I}_{yx}}{\sqrt{f}},
+    \bar{I}_{yx}^*=\frac{\bar{I}_{yx}}{\sqrt{\alpha_K}},
   \end{equation}
   the variance of the total input current is remains unchanged:
   \begin{equation}
     (\sigma_y^*)^2
     = \frac{1}{2}\tauS \sum_x K_{yx}^* \bar{I}_{yx}^{*,2} \nu_x
-    = \frac{1}{2}\tauS \sum_x fK_{yx} \left(\frac{\bar{I}_{yx}^*}{\sqrt{f}}\right)^2 \nu_x
+    = \frac{1}{2}\tauS \sum_x \alpha_K K_{yx} \left(\frac{\bar{I}_{yx}^*}{\sqrt{\alpha_K}}\right)^2 \nu_x
     = \sigma_y^2.
   \end{equation}
   If we furthermore inject an additional constant input current with amplitude
   \begin{equation}
-   \Delta\mu_y = \left(1-\sqrt{f}\right)  \mu_y 
+   \Delta\mu_y = \left(1-\sqrt{\alpha_K}\right)  \mu_y 
   \end{equation}
   into all neurons in population $y$, we simultaneously preserve the mean of the total input current:
   \begin{equation}
     \mu_y^*
     = \tauS \sum_x K_{yx}^*  \bar{I}_{yx}^*   \nu_x + \Delta\mu_y
-    = \tauS \sum_x f K_{yx}  \frac{\bar{I}_{yx}}{\sqrt{f}}   \nu_x +  \Delta\mu_y
-    = \sqrt{f} \mu_y  +  \left(1-\sqrt{f}\right)  \mu_y
+    = \tauS \sum_x \alpha_K K_{yx}  \frac{\bar{I}_{yx}}{\sqrt{\alpha_K}}   \nu_x +  \Delta\mu_y
+    = \sqrt{\alpha_K} \mu_y  +  \left(1-\sqrt{\alpha_K}\right)  \mu_y
     =  \mu_y.
   \end{equation}
   (see remark \ref{remark:dc_scaling_constraints}).
@@ -831,44 +830,44 @@ $y\in\left\{\mathcal{E}_{23},\mathcal{E}_{4},\mathcal{E}_{5},\mathcal{E}_{6},\ma
 %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
 \item \label{remark:dc_scaling_constraints}
-  In the scaled version of the model, the neurons receive --in addition to the cortico-cortical inputs-- an additional constant input current of magnitude $\Delta\mu_y = ( 1 - \sqrt{f}) \mu_y$ (see remark \ref{remark:network_scaling}).
+  In the scaled version of the model, the neurons receive --in addition to the cortico-cortical inputs-- an additional constant input current of magnitude $\Delta\mu_y = ( 1 - \sqrt{\alpha_K}) \mu_y$ (see remark \ref{remark:network_scaling}).
   The total DC input current injected into neurons of population $y$ is hence given by
   \begin{equation}
     \label{eq:dc_magnitude_rescaled}
     \begin{aligned}
     I_{\text{DC},y}
-    & = I_{y\mathcal{C}_y}^* + \left( 1 - \sqrt{f} \right) \mu_y\\
-    & = \sqrt{f} I_{y\mathcal{C}_y} + \left( 1 - \sqrt{f} \right) \left( \mu_{y,\text{loc}} + I_{y\mathcal{C}_y}\right) \\
-    & = I_{y\mathcal{C}_y} + \left( 1 - \sqrt{f} \right) \mu_{y,\text{loc}}
+    & = I_{y\mathcal{C}_y}^* + \left( 1 - \sqrt{\alpha_K} \right) \mu_y\\
+    & = \sqrt{\alpha_K} I_{y\mathcal{C}_y} + \left( 1 - \sqrt{\alpha_K} \right) \left( \mu_{y,\text{loc}} + I_{y\mathcal{C}_y}\right) \\
+    & = I_{y\mathcal{C}_y} + \left( 1 - \sqrt{\alpha_K} \right) \mu_{y,\text{loc}}
     ,      
     \end{aligned}
   \end{equation}
-  where $I_{y\mathcal{C}_y}^* = \tauS \cdot fK_{y\mathcal{C}_y} \cdot \bar{I}_{y\mathcal{C}_y}/\sqrt{f} = \sqrt{f} I_{y\mathcal{C}_y}$ denotes the rescaled cortico-cortical input current, and  $\mu_{y,\text{loc}}=\mu_y - I_{y\mathcal{C}_y}$ the mean input current resulting from synaptic inputs from the local network.
+  where $I_{y\mathcal{C}_y}^* = \tauS \cdot \alpha_K K_{y\mathcal{C}_y} \cdot \bar{I}_{y\mathcal{C}_y}/\sqrt{\alpha_K} = \sqrt{\alpha_K} I_{y\mathcal{C}_y}$ denotes the rescaled cortico-cortical input current, and  $\mu_{y,\text{loc}}=\mu_y - I_{y\mathcal{C}_y}$ the mean input current resulting from synaptic inputs from the local network.
   In the absence of any initial spikes, the neurons in the network can generate spikes only if $I_{\text{DC},y}$ exceeds the rheobase current
   \begin{equation}
     \label{eq:rheobase_current}
      I_{\text{rh},y} = \frac{V_\text{th} - V_\text{rest}}{\RM} ,
   \end{equation}
   at least for some of the populations $y$.
-  To ensure that population $y$ of the scaled network becomes is activated by the external inputs, the scaling factor $f$ must fulfill
+  To ensure that population $y$ of the scaled network becomes is activated by the external inputs, the scaling factor $\alpha_K$ must fulfill
   \begin{equation}
     \label{eq:scaling_factor_constraint}
-      I_{y\mathcal{C}_y} + \left( 1 - \sqrt{f} \right) \mu_{y,\text{loc}} \geq I_{\text{rh},y} 
+      I_{y\mathcal{C}_y} + \left( 1 - \sqrt{\alpha_K} \right) \mu_{y,\text{loc}} \geq I_{\text{rh},y} 
       \quad\Leftrightarrow\quad
-      f
+      \alpha_K
       \begin{cases} 
-        \ge f_y^* & \text{if}\ \mu_{y,\text{loc}} < 0 \\
-        \le f_y^* & \text{if}\ \mu_{y,\text{loc}} > 0 \\
+        \ge \alpha_{K,y}^* & \text{if}\ \mu_{y,\text{loc}} < 0 \\
+        \le \alpha_{K,y}^* & \text{if}\ \mu_{y,\text{loc}} > 0 \\
       \end{cases},
   \end{equation}
   with the critical scaling factor
   \begin{equation}
     \label{eq:critical_scaling_factor}
-    f_y^* = \left(1 - \frac{I_{\text{rh},y} - I_{y\mathcal{C}_y}}{\mu_{y,\text{loc}}}\right)^2 .
+    \alpha_{K,y}^* = \left(1 - \frac{I_{\text{rh},y} - I_{y\mathcal{C}_y}}{\mu_{y,\text{loc}}}\right)^2 .
   \end{equation}
   Typically, the mean of the local input current is negative, $\mu_{y,\text{loc}}<0$, due to the dominant inhibitory feedback in balanced networks.
-  In this case, the critical scaling factor $f_y^*$ defines a lower bound for $f$.
-  If the network is downscaled too much such that $f<f_y^*$ for some population $y$, this population can only be activated by other populations $y'$ where $f>f_{y'}^*$.
+  In this case, the critical scaling factor $\alpha_{K,y}^*$ defines a lower bound for $\alpha_K$.
+  If the network is downscaled too much such that $\alpha_K<\alpha_{K,y}^*$ for some population $y$, this population can only be activated by other populations $y'$ where $\alpha_K>\alpha_{K,y'}^*$.
 %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
 \item \label{remark:initial_conditions} The original model of \citet{Potjans14} uses \emph{population unspecific} normal distributions of initial membrane potentials.

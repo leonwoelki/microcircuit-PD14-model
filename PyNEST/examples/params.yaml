@@ -42,7 +42,7 @@ K_scaling: 0.2
 # CC_type: dc
 # Type of cortico-cortical input ('poisson' or 'dc').
 # unit: 
-# LaTeX: bg\_input\_type
+# LaTeX: CC\_type
 # section: network
 
 # K_CC_full: [1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100]
@@ -72,13 +72,13 @@ K_scaling: 0.2
 # V_rest: -65.0
 # Resting potential.
 # unit: mV
-# LaTeX: V_\text{rest}
+# LaTeX: $V_\text{rest}$
 # section: neuron
 
 # V_th: -50.0
 # Spike threshold potential.
 # unit: mV
-# LaTeX: $\theta$
+# LaTeX: $V_\text{th}$
 # section: neuron
 
 # V_reset: -65.0
@@ -114,7 +114,7 @@ K_scaling: 0.2
 # weight_cv: 0.1
 # Coefficient of variation of synaptic weight distributions (ratio between standard deviation and mean).
 # unit: 
-# LaTeX: $\text{CV}_\text{w}$
+# LaTeX: $\text{CV}_\text{s}$
 # section: synapse
 
 # g: -4.0
@@ -186,7 +186,7 @@ K_scaling: 0.2
 # th_start: 700.0
 # Onset time of thalamic input.
 # unit: ms
-# LaTeX: $t_\text{start}$
+# LaTeX: $t_\text{TC,start}$
 # section: stimulus
 
 # th_duration: 10.0
@@ -204,7 +204,7 @@ K_scaling: 0.2
 # num_th_neurons: 902
 # Number of thalamic neurons.
 # unit: 
-# LaTeX: $N_\text{TC}$
+# LaTeX: $N_\mathcal{T}$
 # section: stimulus
 
 # conn_probs_th: [0.0, 0.0, 0.0983, 0.0619, 0.0, 0.0, 0.0512, 0.0196]
@@ -240,19 +240,19 @@ K_scaling: 0.2
 # t_presim: 500.0
 # Duration of presimulation (warmup).
 # unit: ms
-# LaTeX: t\_presim$
+# LaTeX: t\_presim
 # section: simulation
 
 # t_sim: 1000.0
 # Duration of (main) simulation.
 # unit: ms
-# LaTeX: t\_sim$
+# LaTeX: t\_sim
 # section: simulation
 
 # sim_resolution: 0.1
 # Simulation time resolution.
 # unit: ms
-# LaTeX: sim\_resolution$
+# LaTeX: sim\_resolution
 # section: simulation
 
 # rec_dev: ['spike_recorder']
