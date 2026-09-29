@@ -819,7 +819,7 @@ class Parameters(BaseModel):
         r"adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the input.",
         json_schema_extra={
             "unit": "pA",
-            "latex": r"$I_{DC,x}$",
+            "latex": r"$I_{\text{DC},x}$",
             "section": r"neuron_derived",
         },
     )
