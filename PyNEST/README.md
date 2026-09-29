@@ -54,9 +54,19 @@ The `microcircuit` python package can be installed by one of the following metho
 
 ## Software requirements
 
-- NEST (see [NEST installation](https://nest-simulator.readthedocs.io/en/stable/installation))
+- [NEST](https://github.com/nest/nest-simulator) (see [NEST installation](https://nest-simulator.readthedocs.io/en/stable/installation))
 
-  We recommend installing NEST locally within the virtual environment:
+  We recommend installing NEST locally within the virtual environment created above, so make sure it is activated:
+  ```
+  source venv/bin/activate
+  ```
+
+  To run NEST with a basic configuration on a laptop, NEST >= 3.10 can be installed directly from PyPI:
+  ```bash
+  pip install nest-simulator
+  ```
+  
+  If you require an older NEST version (< 3.10), you can build it from source:
   ```bash
   git clone https://github.com/nest/nest-simulator
   ## for a specific <VERSION> (e.g. <VERSION>=v3.9), use
@@ -69,6 +79,9 @@ The `microcircuit` python package can be installed by one of the following metho
   make
   make install
   ```
+
+  For a customized NEST configuration (e.g., for HPC users), see [CMake Options for NEST](https://nest-simulator.readthedocs.io/en/stable/installation/cmake_options.html).
+  
 - Python 3.x
 - docopt-ng, matplotlib, numpy, psutil, ruamel.yaml, scipy (handled by python package dependencies)
 
@@ -93,7 +106,7 @@ After installation, the `microcircuit` python package can be imported in a pytho
 import microcircuit
 ```
 
-See [this example](https://microcircuit-pd14-model.readthedocs.io/en/latest/microcircuit_example.html) for a more detailed illustrations of how the package can be used.
+See [this example](https://microcircuit-pd14-model.readthedocs.io/en/latest/microcircuit_example.html) for a more detailed illustration of how the package can be used.
 
 ### Configuring via YAML
 
@@ -148,7 +161,7 @@ Recent performance benchmarking results for the microcircuit model can be found 
 
 ## Implementation details
 
-This implementation uses the [`iaf_psc_exp`](https://nest-simulator.org/documentation/models/iaf_psc_exp.html) neuron and the [`static_synapse`](https://nest-simulator.org/documentation/models/static_synapse.html) synapse models provided in [NEST]. 
+This implementation uses the [`iaf_psc_exp`](https://nest-simulator.org/documentation/models/iaf_psc_exp.html) neuron and the [`static_synapse`](https://nest-simulator.org/documentation/models/static_synapse.html) synapse models provided in [NEST](https://www.nest-simulator.org/). 
 The network is connected according to the [`fixed_total_number`](https://nest-simulator.org/documentation/synapses/connectivity_concepts.html#random-fixed-total-number) connection rule in NEST. 
 The neuron dynamics is integrated in a time-driven manner using exact integration with a simulation step size `sim_resolution` [(Rotter & Diesmann, 1999)][1].
 
