@@ -135,7 +135,7 @@ Storing simulation metadata to {self.P.data_path}
 """)
 
             ### parameters (primary + derived, in one snapshot)
-            helpers.dict2json(self.P.model_dump(), self.P.data_path / "P.json")
+            helpers.dict2json(self.P.model_dump(), self.P.data_path / "params.json")
 
             ### nodes (populations, readout neurons, recording/stimulus devices)
             nodes = {}
