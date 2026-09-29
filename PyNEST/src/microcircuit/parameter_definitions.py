@@ -814,7 +814,7 @@ class Parameters(BaseModel):
     @computed_field(
         description=r"DC input amplitude compensating for the potentially missing "
         r"cortico-cortical Poisson input, for each cortical population $x$; "
-        r"$I_{DC,x}=0$ if $\mathcal{C}_\text{type}=\text{poisson}$, else "
+        r"$I_{\text{DC},x}=0$ if $\mathcal{C}_\text{type}=\text{poisson}$, else "
         r"$I_{DC,x}=\nu_\mathcal{C}\,\tilde{K}_{\mathcal{C}_x}\,\bar{I}_\text{CC}\,\tau_\text{syn}\cdot 10^{-3}$, "
         r"adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the input.",
         json_schema_extra={
