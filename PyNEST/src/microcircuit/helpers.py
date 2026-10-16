@@ -45,6 +45,22 @@ if "DISPLAY" not in os.environ:
 #########################################################################
 
 
+def message(text):
+    """Prints a message on MPI rank 0, avoiding printing once per MPI process.
+
+    Parameters
+    ----------
+    text
+        Message to be printed.
+    """
+
+    if nest.Rank() == 0:
+        print(text)
+
+
+#########################################################################
+
+
 def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> np.ndarray:
     """
     Creates a matrix of size `num_pops` x `num_pops`, where columns with even
@@ -444,11 +460,11 @@ def firing_rates(path, name, begin, end):
 #########################################################################
 
 
-def boxplot(path, populations):
+def boxplot_firing_rates(path, populations):
     """Creates a boxblot of the firing rates of all populations.
 
     To create the boxplot, the firing rates of each neuron in each population
-    need to be computed with the function ``firing_rate()``.
+    need to be computed with the function ``firing_rates()``.
 
     Parameters
     -----------

@@ -61,7 +61,7 @@ def main():
     time_network = time.time()
 
     ## create all nodes (neurons, devices)
-    model.create()
+    model.create_nodes()
     time_create = time.time()
 
     ## connect nework

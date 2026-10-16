@@ -72,7 +72,7 @@ def run_example(P):
 
     time_network = time.time()
 
-    model.create()
+    model.create_nodes()
     time_create = time.time()
 
     model.connect()

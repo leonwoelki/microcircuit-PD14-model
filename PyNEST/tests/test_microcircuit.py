@@ -40,7 +40,7 @@ def test_simulation():
         model = Model(P)
 
         ## create all nodes (neurons, devices)
-        model.create()
+        model.create_nodes()
 
         ## connect nework
         model.connect()
