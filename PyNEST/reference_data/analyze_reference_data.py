@@ -36,18 +36,18 @@ parser.add_argument("--path", type=str, default="data")
 args = parser.parse_args()
 
 path = Path(args.path)
-P = Parameters()
-P.data_path = path
-P.rng_seed = args.seed
+params = Parameters()
+params.data_path = path
+params.rng_seed = args.seed
 
 #####################
-populations = P.populations  # list of populations
+populations = params.populations  # list of populations
 #####################
 
 ## set network scale
 scaling_factor = ref_dict["scaling_factor"]
-P.N_scaling = scaling_factor
-P.K_scaling = scaling_factor
+params.N_scaling = scaling_factor
+params.K_scaling = scaling_factor
 
 random.seed(ref_dict["seed_subsampling"])  # set seed for reproducibility
 
@@ -80,7 +80,7 @@ def analyze_single_neuron_stats(observable_name: str, func: callable) -> dict:
         ref_dict["t_presim"] + ref_dict["t_sim"],
     )
 
-    data_path = Path(P.data_path)
+    data_path = Path(params.data_path)
     nodes = helpers.json2dict(data_path / "nodes.json")
 
     for pop in populations:
@@ -127,7 +127,7 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
     # cc_binsize = 2. # in ms
     observable = {}  # list of pairwise spike count correlations [pop][correlation]
 
-    data_path = Path(P.data_path)
+    data_path = Path(params.data_path)
     nodes = helpers.json2dict(data_path / "nodes.json")
 
     for pop in populations:

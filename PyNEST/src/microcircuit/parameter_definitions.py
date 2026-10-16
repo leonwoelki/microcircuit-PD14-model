@@ -1248,25 +1248,25 @@ def illustrate_parameter_usage():
     # print("All tests passed.")
 
     ## load parameters from YAML file and print them
-    P = load_parameters_from_yaml(filename)
-    P.print()
+    params = load_parameters_from_yaml(filename)
+    params.print()
 
     ## illustrate usage
     print()
 
-    P = Parameters()  ## create instance of Parameters class with default values
+    params = Parameters()  ## create instance of Parameters class with default values
 
     print("default:")
-    print("\tfull_num_neurons=", P.full_num_neurons)
-    print("\tnum_neurons=", P.num_neurons)
+    print("\tfull_num_neurons=", params.full_num_neurons)
+    print("\tnum_neurons=", params.num_neurons)
     print()
 
     scaling_factor = 0.2
-    P.N_scaling = scaling_factor
-    P.K_scaling = scaling_factor
+    params.N_scaling = scaling_factor
+    params.K_scaling = scaling_factor
 
     print("after scaling with factor %.1f:" % scaling_factor)
-    print("\tnum_neurons=", P.num_neurons)
+    print("\tnum_neurons=", params.num_neurons)
 
 
 #########################################################################

@@ -1,5 +1,5 @@
 # Parameter overrides used by the bundled entry points (`microcircuit run`,
-# `microcircuit config`, and the reference data generator) when no `--params`
+# `microcircuit show_config`, and the reference data generator) when no `--params`
 # file is given.
 #
 # Only the parameters listed here differ from the defaults defined in

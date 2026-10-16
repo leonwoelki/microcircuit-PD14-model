@@ -51,7 +51,7 @@ from microcircuit.parameter_definitions import Parameters
 ##     python run_microcircuit.py my_params.yaml
 
 params_file = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "params.yaml"
-P = Parameters.from_yaml(params_file)
+params = Parameters.from_yaml(params_file)
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
     time_start = time.time()
 
     ## create instance of the model
-    model = Model(P)
+    model = Model(params)
 
     time_network = time.time()
 
@@ -72,11 +72,11 @@ def main():
     time_connect = time.time()
 
     ## pre-simulation (warm-up phase)
-    model.simulate(P.t_presim)
+    model.simulate(params.t_presim)
     time_presimulate = time.time()
 
     ## simulation
-    model.simulate(P.t_sim)
+    model.simulate(params.t_sim)
     time_simulate = time.time()
 
     ## store metadata
@@ -92,11 +92,11 @@ def main():
     print()
     print("##########################################")
     print()
-    observation_interval = np.array([P.t_presim, P.t_presim + P.t_sim])
+    observation_interval = np.array([params.t_presim, params.t_presim + params.t_sim])
     model.evaluate(observation_interval, observation_interval)
     print()
-    print("Raster plot                  : see %s " % (P.data_path / "raster_plot.png"))
-    print("Distributions of firing rates: see %s " % (P.data_path / "box_plot.png"))
+    print("Raster plot                  : see %s " % (params.data_path / "raster_plot.png"))
+    print("Distributions of firing rates: see %s " % (params.data_path / "box_plot.png"))
     time_evaluate = time.time()
 
     #####################

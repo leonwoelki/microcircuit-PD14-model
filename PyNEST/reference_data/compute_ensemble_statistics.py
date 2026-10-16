@@ -31,20 +31,20 @@ from microcircuit.parameter_definitions import Parameters
 from params import params as ref_dict
 
 #####################
-P = Parameters()
-populations = P.populations # list of populations
+params = Parameters()
+populations = params.populations # list of populations
 #####################
 
 ## set network scale
 scaling_factor = ref_dict['scaling_factor']
-P.N_scaling = scaling_factor
-P.K_scaling = scaling_factor
+params.N_scaling = scaling_factor
+params.K_scaling = scaling_factor
 
 random.seed( ref_dict['seed_subsampling'] )  # set seed for reproducibility
 
 seeds = ref_dict['RNG_seeds'] # list of seeds
 
-P.data_path = Path(ref_dict['data_path']) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
+params.data_path = Path(ref_dict['data_path']) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
 
 #######################################################
 # Define auxiliary functions to analyze and plot data #
@@ -67,13 +67,13 @@ def concatenate_data( observable_name: str ) -> dict:
 
     for cseed, seed in enumerate( seeds ):
         observable[cseed] = {}
-        data_path = Path(P.data_path) / f'seed-{seed}'
+        data_path = Path(params.data_path) / f'seed-{seed}'
 
         data_per_seed = helpers.json2dict( data_path / f'{observable_name}.json' ) # load data per seed as dictionary sorted by populations
 
         observable[cseed] = data_per_seed # concatenate data
 
-    helpers.dict2json( observable, Path(P.data_path) / f'{observable_name}.json' ) # store concatenated data as json file
+    helpers.dict2json( observable, Path(params.data_path) / f'{observable_name}.json' ) # store concatenated data as json file
 
     return observable
 
@@ -111,7 +111,7 @@ def compute_ks_distances( observable: dict, observable_name: str ) -> dict:
                 observable_ks_distances[pop]["seeds"][i][j] = observable_ks_distance
                 observable_ks_distances[pop]["list"].append( observable_ks_distance )
 
-    helpers.dict2json( observable_ks_distances, Path(P.data_path) / f'{observable_name}_ks_distances.json' ) # save ks distances as json file
+    helpers.dict2json( observable_ks_distances, Path(params.data_path) / f'{observable_name}_ks_distances.json' ) # save ks distances as json file
 
     return observable_ks_distances
 

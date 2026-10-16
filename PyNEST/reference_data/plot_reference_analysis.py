@@ -30,16 +30,16 @@ from microcircuit.parameter_definitions import Parameters
 from params import params as ref_dict
 
 #####################
-P = Parameters()
-populations = P.populations  # list of populations
+params = Parameters()
+populations = params.populations  # list of populations
 #####################
 
 ## set network scale
 scaling_factor = ref_dict["scaling_factor"]
-P.N_scaling = scaling_factor
-P.K_scaling = scaling_factor
+params.N_scaling = scaling_factor
+params.K_scaling = scaling_factor
 
-P.data_path = Path(ref_dict["data_path"]) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
+params.data_path = Path(ref_dict["data_path"]) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
 
 ## set path for storing spike data and figures
 seeds = ref_dict["RNG_seeds"]  # list of seeds
@@ -217,7 +217,7 @@ def compute_data_dist(
             observable_stats[cseed][pop] = stats  # store statistics
 
     helpers.dict2json(
-        observable_stats, Path(P.data_path) / f"{observable_name}_stats.json"
+        observable_stats, Path(params.data_path) / f"{observable_name}_stats.json"
     )  # save statistics as json file
 
     return observable_hist_mat, observable_best_bins, observable_stats
@@ -270,7 +270,7 @@ def plot_data_dists(
     rcParams["text.usetex"] = False
     rcParams["legend.framealpha"] = 1.0
     rcParams["legend.edgecolor"] = "k"
-    data_path = Path(P.data_path)
+    data_path = Path(params.data_path)
 
     x_max_hist = 0
     x_min_hist = 0
@@ -446,7 +446,7 @@ def plot_data_dists(
 
 
 def main():
-    data_path = Path(P.data_path)
+    data_path = Path(params.data_path)
 
     # Read in the data from json files
     rates = helpers.json2dict(data_path / "rates.json")

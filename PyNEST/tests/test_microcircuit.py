@@ -24,20 +24,20 @@ from microcircuit.parameter_definitions import Parameters
 
 def test_simulation():
 
-    P = Parameters()
+    params = Parameters()
 
     ## set scaling factor of simulation
     scaling_factor = 0.2
-    P.N_scaling = scaling_factor
-    P.K_scaling = scaling_factor
+    params.N_scaling = scaling_factor
+    params.K_scaling = scaling_factor
 
     ## set simulation time
-    P.t_sim = 100.0
+    params.t_sim = 100.0
 
     def run_simulation():
 
         ## create instance of the model
-        model = Model(P)
+        model = Model(params)
 
         ## create all nodes (neurons, devices)
         model.create_nodes()
@@ -46,7 +46,7 @@ def test_simulation():
         model.connect()
 
         ## simulation
-        model.simulate(P.t_sim)
+        model.simulate(params.t_sim)
 
         return not None
 

@@ -33,23 +33,23 @@ parser.add_argument("--path", type=str, default="data")
 args = parser.parse_args()
 
 path = Path(args.path)
-P = Parameters()
-P.data_path = str(path) + "/"
-P.rng_seed = args.seed
+params = Parameters()
+params.data_path = str(path) + "/"
+params.rng_seed = args.seed
 
 #####################
 
 ## set network scale
 scaling_factor = ref_dict['scaling_factor']
-P.N_scaling = scaling_factor
-P.K_scaling = scaling_factor
+params.N_scaling = scaling_factor
+params.K_scaling = scaling_factor
 
 ## set pre-simulation time to 0 and desired simulation time
-P.t_presim = ref_dict["t_presim"]
-P.t_sim = ref_dict["t_sim"] # simulate for 10.0s
+params.t_presim = ref_dict["t_presim"]
+params.t_sim = ref_dict["t_sim"] # simulate for 10.0s
 
 ## set number of local number of threads
-P.local_num_threads = ref_dict['local_num_threads']
+params.local_num_threads = ref_dict['local_num_threads']
 
 def main():
 
@@ -57,7 +57,7 @@ def main():
     time_start = time.time()
 
     ## create instance of the model
-    model = Model(P)
+    model = Model(params)
     time_network = time.time()
 
     ## create all nodes (neurons, devices)
@@ -69,11 +69,11 @@ def main():
     time_connect = time.time()
 
     ## pre-simulation (warm-up phase)
-    model.simulate(P.t_presim)
+    model.simulate(params.t_presim)
     time_presimulate = time.time()
 
     ## simulation
-    model.simulate(P.t_sim)
+    model.simulate(params.t_sim)
     time_simulate = time.time()
 
     ## current memory consumption of the python process (in MB)
@@ -88,11 +88,11 @@ def main():
     print()
     print('##########################################')
     print()
-    observation_interval = np.array([P.t_presim, P.t_presim + P.t_sim])
+    observation_interval = np.array([params.t_presim, params.t_presim + params.t_sim])
     model.evaluate(observation_interval , observation_interval )
     print()
-    print('Raster plot                  : see %s ' % (P.data_path / 'raster_plot.png') )
-    print('Distributions of firing rates: see %s ' % (P.data_path / 'box_plot.png'   ) )
+    print('Raster plot                  : see %s ' % (params.data_path / 'raster_plot.png') )
+    print('Distributions of firing rates: see %s ' % (params.data_path / 'box_plot.png'   ) )
     time_evaluate = time.time()
 
     #####################

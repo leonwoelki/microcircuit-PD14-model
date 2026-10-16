@@ -27,7 +27,7 @@
 PyNEST implementation of the cortical microcircuit model of Potjans & Diesmann (2014).
 
 Usage: microcircuit [options] run
-       microcircuit [options] config
+       microcircuit [options] show_config
 
 Options:
     -p FILE, --params FILE  YAML file with parameter overrides. Parameters not
@@ -56,9 +56,9 @@ log = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
 
-def run_example(P):
+def run_example(params):
     time_start = time.time()
-    model = Model(P)
+    model = Model(params)
 
     ###############################################################################
     # Initialize the network with simulation, network and stimulation parameters,
@@ -78,10 +78,10 @@ def run_example(P):
     model.connect()
     time_connect = time.time()
 
-    model.simulate(P.t_presim)
+    model.simulate(params.t_presim)
     time_presimulate = time.time()
 
-    model.simulate(P.t_sim)
+    model.simulate(params.t_sim)
     time_simulate = time.time()
 
     ###############################################################################
@@ -92,8 +92,8 @@ def run_example(P):
     # The computation of spike rates discards the presimulation time to exclude
     # initialization artifacts.
 
-    raster_plot_interval = np.array([P.th_start - 100.0, P.th_start + 100.0])
-    firing_rates_interval = np.array([P.t_presim, P.t_presim + P.t_sim])
+    raster_plot_interval = np.array([params.th_start - 100.0, params.th_start + 100.0])
+    firing_rates_interval = np.array([params.t_presim, params.t_presim + params.t_sim])
     model.evaluate(raster_plot_interval, firing_rates_interval)
     time_evaluate = time.time()
 
@@ -124,16 +124,16 @@ def main():
 
     params_file = args["--params"] or example_params_file()
     log.info("Reading parameter overrides from %s", params_file)
-    P = Parameters.from_yaml(params_file)
+    params = Parameters.from_yaml(params_file)
 
     if args["run"]:
-        run_example(P)
+        run_example(params)
 
-    if args["config"]:
+    if args["show_config"]:
         print()
         print("Model parameters:")
         print("-----------------")
-        pprint.pprint(P.model_dump())
+        pprint.pprint(params.model_dump())
         print()
 
 

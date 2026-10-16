@@ -346,7 +346,7 @@ def plot_raster(path, name, begin, end, N_scaling):
     ylabels = ["L2/3", "L4", "L5", "L6"]
     color_list = np.tile(["#595289", "#af143c"], 4)
 
-    sd_names, node_ids, data = __load_spike_times(path, name, begin, end)
+    sd_names, node_ids, data = _load_spike_times(path, name, begin, end)
     last_node_id = node_ids[-1, -1]
     mod_node_ids = np.abs(node_ids - last_node_id) + 1
 
@@ -436,7 +436,7 @@ def firing_rates(path, name, begin, end):
     None
 
     """
-    sd_names, node_ids, data = __load_spike_times(path, name, begin, end)
+    sd_names, node_ids, data = _load_spike_times(path, name, begin, end)
     all_mean_rates = []
     all_std_rates = []
     for i, n in enumerate(sd_names):
@@ -550,7 +550,7 @@ def boxplot_firing_rates(path, populations):
 #########################################################################
 
 
-def __gather_metadata(path, name):
+def _gather_metadata(path, name):
     """Reads names and ids of spike recorders and first and last ids of
     neurons in each population.
 
@@ -597,7 +597,7 @@ def __gather_metadata(path, name):
 #########################################################################
 
 
-def __load_spike_times(path, name, begin, end):
+def _load_spike_times(path, name, begin, end):
     """Loads spike times of each spike recorder.
 
     Parameters
@@ -618,7 +618,7 @@ def __load_spike_times(path, name, begin, end):
         to ``end``.
 
     """
-    sd_files, sd_names, node_ids = __gather_metadata(path, name)
+    sd_files, sd_names, node_ids = _gather_metadata(path, name)
     data = {}
     dtype = np.dtype(
         {"names": ("sender", "time_ms"), "formats": ("i4", "f8")}
