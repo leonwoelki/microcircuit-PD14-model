@@ -249,34 +249,30 @@ Storing simulation metadata to {self.P.data_path}
 
         self.pops = []
         for i in np.arange(self.P.num_pops):
-            population = nest.Create(self.P.neuron_model, self.P.num_neurons[i])
-
-            population.set(
-                tau_syn_ex=self.P.tau_syn,
-                tau_syn_in=self.P.tau_syn,
+            pop_params = {
+                "tau_syn_ex": self.P.tau_syn,
+                "tau_syn_in": self.P.tau_syn,
                 # NEST's iaf_psc_exp kwarg is fixed as `E_L`, unlike renamed field
-                E_L=self.P.V_rest,
-                V_th=self.P.V_th,
-                V_reset=self.P.V_reset,
+                "E_L": self.P.V_rest,
+                "V_th": self.P.V_th,
+                "V_reset": self.P.V_reset,
                 # NEST's iaf_psc_exp kwarg is fixed as `t_ref`, unlike renamed field
-                t_ref=self.P.tau_ref,
-                I_e=self.P.DC_amp[i],
-            )
-
+                "t_ref": self.P.tau_ref,
+                "I_e": self.P.DC_amp[i],
+            }
+            
             if self.P.V0_type == "optimized":
-                population.set(
-                    V_m=nest.random.normal(
+                pop_params["V_m"] = nest.random.normal(
                         self.P.V0_mean_optimized[i],
                         self.P.V0_std_optimized[i],
                     )
-                )
             else:
-                population.set(
-                    V_m=nest.random.normal(
+                pop_params["V_m"] = nest.random.normal(
                         self.P.V0_mean_original,
                         self.P.V0_std_original,
                     )
-                )
+
+            population = nest.Create(self.P.neuron_model, n=self.P.num_neurons[i], params=pop_params)
 
             self.pops.append(population)
 
@@ -305,44 +301,41 @@ Storing simulation metadata to {self.P.data_path}
         if "spike_recorder" in self.P.rec_dev:
             if nest.Rank() == 0:
                 print("  Creating spike recorders.")
-            sd_dict = {
+            sd_params = {
                 "record_to": "ascii",
                 "label": os.path.join(self.P.data_path, "spike_recorder"),
             }
             self.spike_recorders = nest.Create(
-                "spike_recorder", n=self.P.num_pops, params=sd_dict
+                "spike_recorder", n=self.P.num_pops, params=sd_params
             )
 
         if "voltmeter" in self.P.rec_dev:
             if nest.Rank() == 0:
                 print("  Creating voltmeters.")
-            vm_dict = {
+            vm_params = {
                 "interval": self.P.rec_V_int,
                 "record_to": "ascii",
                 "record_from": ["V_m"],
                 "label": os.path.join(self.P.data_path, "voltmeter"),
             }
             self.voltmeters = nest.Create(
-                "voltmeter", n=self.P.num_pops, params=vm_dict
+                "voltmeter", n=self.P.num_pops, params=vm_params
             )
 
     def __create_poisson_bg_input(self):
-        """Creates the Poisson generators for ongoing background input if
-        ``P.CC_type`` is ``"poisson"``.
+        """Creates the Poisson generators for ongoing background input if ``P.CC_type`` is ``"poisson"``.
 
-        If ``CC_type`` is ``"dc"`` instead, DC input is applied for compensation
-        in ``__create_neuronal_populations()``.
+        If ``CC_type`` is ``"dc"`` instead, DC input is applied for compensation in ``__create_neuronal_populations()``.
 
         """
         if nest.Rank() == 0:
             print("Creating Poisson generators for background input.")
 
-        self.poisson_bg_input = nest.Create("poisson_generator", n=self.P.num_pops)
-        self.poisson_bg_input.rate = (np.array(self.P.K_CC) * self.P.rate_CC).tolist()
+        self.poisson_bg_input = nest.Create("poisson_generator", n=self.P.num_pops,
+                                            params={"rate": (np.array(self.P.K_CC) * self.P.rate_CC).tolist()})
 
     def __create_thalamic_stim_input(self):
-        """Creates the thalamic neuronal population if specified in
-        ``P``.
+        """Creates the thalamic neuronal population if specified in ``P``.
 
         Each neuron of the thalamic population is supposed to transmit the same
         Poisson spike train to all of its targets in the cortical neuronal population,
@@ -362,16 +355,13 @@ Storing simulation metadata to {self.P.data_path}
 
         self.thalamic_population = nest.Create("parrot_neuron", n=self.P.num_th_neurons)
 
-        self.poisson_th = nest.Create("poisson_generator")
-        self.poisson_th.set(
-            rate=self.P.th_rate,
-            start=self.P.th_start,
-            stop=(self.P.th_start + self.P.th_duration),
-        )
+        self.poisson_th = nest.Create("poisson_generator", n=1, params={
+            "rate": self.P.th_rate,
+                        "start": self.P.th_start,
+                        "stop": self.P.th_start + self.P.th_duration})
 
     def __create_dc_stim_input(self):
-        """Creates DC generators for external stimulation if specified
-        in ``P``.
+        """Creates DC generators for external stimulation if specified in ``P``.
 
         The final amplitude is the ``P.dc_amp * P.K_CC_full``.
 
@@ -381,13 +371,13 @@ Storing simulation metadata to {self.P.data_path}
         if nest.Rank() == 0:
             print("Creating DC generators for external stimulation.")
 
-        dc_dict = {
+        dc_params = {
             "amplitude": dc_amp_stim,
             "start": self.P.dc_transient_start,
             "stop": self.P.dc_transient_start + self.P.dc_transient_dur,
         }
         self.dc_stim_input = nest.Create(
-            "dc_generator", n=self.P.num_pops, params=dc_dict
+            "dc_generator", n=self.P.num_pops, params=dc_params
         )
 
     def __connect_neuronal_populations(self):
