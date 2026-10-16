@@ -26,7 +26,6 @@
 
 Main file of the microcircuit defining the ``Model`` class with functions to
 build and simulate the network.
-
 """
 
 import os
@@ -51,9 +50,7 @@ class Model:
     parameters are available as computed fields on `params`.
 
     Parameters
-
     ----------
-
     params: Parameters
         Object containing all model parameters.
     """
@@ -71,8 +68,8 @@ class Model:
         """Creates all network nodes.
 
         Neuronal populations and recording and stimulation devices are created.
-
         """
+
         self._create_neuronal_populations()
         if len(self.params.rec_dev) > 0:
             self._create_recording_devices()
@@ -152,8 +149,8 @@ class Model:
         ----------
         t_sim
             Simulation time (in ms).
-
         """
+
         helpers.message(f"Simulating {t_sim} ms.")
 
         nest.Simulate(t_sim)
@@ -223,6 +220,7 @@ class Model:
 
         Reset the NEST kernel and pass parameters to it.
         """
+
         nest.ResetKernel()
 
         nest.set(
@@ -245,6 +243,7 @@ class Model:
 
         The first and last neuron id of each population is written to file.
         """
+
         helpers.message("Creating neuronal populations.")
 
         self.pops = []
@@ -294,8 +293,8 @@ class Model:
         """Creates one recording device of each kind per population.
 
         Only devices which are given in ``params.rec_dev`` are created.
-
         """
+
         helpers.message("Creating recording devices.")
 
         if "spike_recorder" in self.params.rec_dev:
@@ -324,8 +323,8 @@ class Model:
         """Creates the Poisson generators for ongoing background input if ``params.CC_type`` is ``"poisson"``.
 
         If ``CC_type`` is ``"dc"`` instead, DC input is applied for compensation in ``_create_neuronal_populations()``.
-
         """
+
         helpers.message("Creating Poisson generators for background input.")
 
         self.poisson_bg_input = nest.Create("poisson_generator", n=self.params.num_pops,
@@ -345,8 +344,8 @@ class Model:
 
         Note that the number of thalamic neurons is not scaled with
         ``N_scaling``.
-
         """
+
         helpers.message("Creating thalamic input for external stimulation.")
 
         self.thalamic_population = nest.Create("parrot_neuron", n=self.params.num_th_neurons)
@@ -360,8 +359,8 @@ class Model:
         """Creates DC generators for external stimulation if specified in ``params``.
 
         The final amplitude is ``params.dc_transient_amp * params.K_CC_full``.
-
         """
+
         dc_amp_stim = self.params.dc_transient_amp_populations
 
         helpers.message("Creating DC generators for external stimulation.")
@@ -377,6 +376,7 @@ class Model:
 
     def _connect_neuronal_populations(self):
         """Creates the recurrent connections between neuronal populations."""
+
         helpers.message("Connecting neuronal populations recurrently.")
 
         delay_matrix_mean = self.params.delay_matrix_mean
@@ -436,6 +436,7 @@ class Model:
 
     def _connect_recording_devices(self):
         """Connects the recording devices to the microcircuit."""
+
         helpers.message("Connecting recording devices.")
 
         for i, target_pop in enumerate(self.pops):
@@ -446,6 +447,7 @@ class Model:
 
     def _connect_poisson_bg_input(self):
         """Connects the Poisson generators to the microcircuit."""
+
         helpers.message("Connecting Poisson generators for background input.")
 
         for i, target_pop in enumerate(self.pops):
@@ -466,6 +468,7 @@ class Model:
 
     def _connect_thalamic_stim_input(self):
         """Connects the thalamic input to the neuronal populations."""
+
         helpers.message("Connecting thalamic input.")
 
         # connect Poisson input to thalamic population

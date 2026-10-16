@@ -86,9 +86,7 @@ def analyze_single_neuron_stats(observable_name: str, func: callable) -> dict:
     for pop in populations:
         observable[pop] = {}
 
-        label = "spike_recorder-" + str(
-            nodes["spike_recorder_%s" % pop][0]
-        )  # label of spike recorder device
+        label = f"spike_recorder-{nodes[f'spike_recorder_{pop}'][0]}"  # label of spike recorder device
         spikes = helpers.load_spike_data(
             data_path, label
         )  # load spike data for population
@@ -134,9 +132,7 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
         observable[pop] = {}
 
         pop_nodes = nodes[pop]  # list of neuron nodes for the population
-        label = "spike_recorder-" + str(
-            nodes["spike_recorder_%s" % pop][0]
-        )  # label of spike recorder device
+        label = f"spike_recorder-{nodes[f'spike_recorder_{pop}'][0]}"  # label of spike recorder device
         spikes = helpers.load_spike_data(
             data_path, label
         )  # load spike data for population

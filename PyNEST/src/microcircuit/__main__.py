@@ -102,14 +102,14 @@ def run_example(params):
     # data evaluation and print calls.
 
     print(
-        "\nTimes of Rank {}:\n".format(nest.Rank())
-        + "  Total time:          {:.3f} s\n".format(time_evaluate - time_start)
-        + "  Time to initialize:  {:.3f} s\n".format(time_network - time_start)
-        + "  Time to create:      {:.3f} s\n".format(time_create - time_network)
-        + "  Time to connect:     {:.3f} s\n".format(time_connect - time_create)
-        + "  Time to presimulate: {:.3f} s\n".format(time_presimulate - time_connect)
-        + "  Time to simulate:    {:.3f} s\n".format(time_simulate - time_presimulate)
-        + "  Time to evaluate:    {:.3f} s\n".format(time_evaluate - time_simulate)
+        f"\nTimes of Rank {nest.Rank()}:\n"
+        f"  Total time:          {time_evaluate - time_start:.3f} s\n"
+        f"  Time to initialize:  {time_network - time_start:.3f} s\n"
+        f"  Time to create:      {time_create - time_network:.3f} s\n"
+        f"  Time to connect:     {time_connect - time_create:.3f} s\n"
+        f"  Time to presimulate: {time_presimulate - time_connect:.3f} s\n"
+        f"  Time to simulate:    {time_simulate - time_presimulate:.3f} s\n"
+        f"  Time to evaluate:    {time_evaluate - time_simulate:.3f} s\n"
     )
 
     model.store_metadata()
@@ -117,6 +117,7 @@ def run_example(params):
 
 def main():
     "Start main CLI entry point."
+
     args = docopt(__doc__)
     if args["--verbose"]:
         log.setLevel(logging.DEBUG)

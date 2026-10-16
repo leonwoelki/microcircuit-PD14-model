@@ -36,7 +36,6 @@ validated against the JSON schema (see `load_parameters_from_yaml()`).
 Secondary parameters are derived from the primary parameters by defining
 "computed_fields". When loading user-defined parameters from a YAML
 file, the computed fields are automatically updated.
-
 """
 
 ####################################
@@ -763,6 +762,7 @@ class Parameters(BaseModel):
         self.PSC_ext/self.DC_amp, since those properties return this method's
         *output* - reusing them here would recurse.
         """
+
         base_psc_matrix = np.array(self.PSP_matrix_mean) / self.J_unit
         base_psc_ext = self.weight_exc_mean / self.J_unit
 
@@ -1068,7 +1068,6 @@ class Parameters(BaseModel):
 
         Parameters
             A new, validated instance.
-
         """
 
         with open(filename, "r") as yaml_file:
@@ -1134,7 +1133,6 @@ def generate_example_config(filename="params_default.yaml", mode="validation") -
           'serialization': both primary and secondary parameters are included;
                            secondary parameters are included without values, as
                            they will be automatically updated
-
     """
 
     schema = Parameters.model_json_schema(mode=mode)
@@ -1182,7 +1180,6 @@ def load_parameters_from_yaml(filename) -> Parameters:
     Loads parameters from a YAML file and validates them against the Parameters
     class. Thin wrapper around `Parameters.from_yaml()`, kept for backwards
     compatibility.
-
     """
 
     return Parameters.from_yaml(filename)
@@ -1194,7 +1191,6 @@ def example_params_file() -> Path:
     package (`example_params.yaml`). It scales the network down so that the
     bundled entry points (`microcircuit run`, the reference data generator)
     never run the full-scale model by accident.
-
     """
 
     return Path(str(files("microcircuit") / "example_params.yaml"))
@@ -1215,8 +1211,8 @@ def test_parameter_loading(filename) -> None:
     filename: str
               Path to the YAML file containing the parameters to be loaded and
               tested.
-
     """
+
     params = Parameters()
 
     # filename = "params_default.yaml"
@@ -1265,7 +1261,7 @@ def illustrate_parameter_usage():
     params.N_scaling = scaling_factor
     params.K_scaling = scaling_factor
 
-    print("after scaling with factor %.1f:" % scaling_factor)
+    print(f"after scaling with factor {scaling_factor:.1f}:")
     print("\tnum_neurons=", params.num_neurons)
 
 

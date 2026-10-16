@@ -20,7 +20,7 @@ params = {
     #'scaling_factor': 1.0,    
     # RNG seeds for generating model relizations
     #'RNG_seeds': ['12345' + str(i) for i in range(0, 10)],
-    'RNG_seeds': ['12345' + str(i) for i in range(0, 5)],
+    'RNG_seeds': [f'12345{i}' for i in range(0, 5)],
     # pre-simulation time (for network stabilization) in ms
     't_presim': 500.0,
     # simulation time in ms

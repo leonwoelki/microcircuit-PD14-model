@@ -26,10 +26,10 @@
 
 Helper functions for network construction, simulation and evaluation of the
 microcircuit.
-
 """
 
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -87,7 +87,6 @@ def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> np.ndarray:
 
     matrix: np.ndarray(float)
             Matrix of of size (num_pops x num_pops).
-
     """
 
     matrix = np.zeros((num_pops, num_pops))
@@ -120,6 +119,7 @@ def num_synapses_from_conn_probs(conn_probs, popsize1, popsize2):
     num_synapses
         Matrix of synapse numbers.
     """
+
     prod = np.outer(popsize1, popsize2)
     num_synapses = np.log(1.0 - np.array(conn_probs)) / np.log((prod - 1.0) / prod)
 
@@ -171,8 +171,8 @@ def postsynaptic_potential_to_current(C_m, tau_m, tau_syn):
     PSC_over_PSP
         Conversion factor to be multiplied to a `PSP` (in mV) to obtain a `PSC`
         (in pA).
-
     """
+
     sub = 1.0 / (tau_syn - tau_m)
     pre = tau_m * tau_syn / C_m * sub
     frac = (tau_m / tau_syn) ** sub
@@ -203,6 +203,7 @@ def dc_input_compensating_poisson(rate_CC, K_CC_full, tau_syn, PSC_ext):
     DC
         DC input (in pA) which compensates lacking Poisson input.
     """
+
     DC = rate_CC * K_CC_full * PSC_ext * tau_syn * 0.001
     return DC
 
@@ -265,8 +266,8 @@ def adjust_weights_and_input_to_synapse_scaling(
         Adjusted external weight (in pA).
     DC_amp_new
         Adjusted DC input (in pA).
-
     """
+
     PSC_matrix_new = mean_PSC_matrix / np.sqrt(K_scaling)
     PSC_ext_new = PSC_ext / np.sqrt(K_scaling)
 
@@ -337,7 +338,6 @@ def plot_raster(path, name, begin, end, N_scaling):
     Returns
     -------
     None
-
     """
 
     fig_size = (4, 3)  ## figure size (inch)
@@ -378,7 +378,7 @@ def plot_raster(path, name, begin, end, N_scaling):
 
     if N_scaling > 0.2:
         stp = int(10.0 * N_scaling)
-        print("  Only every %dth spike is plotted." % stp)
+        print(f"  Only every {stp}th spike is plotted.")
 
     all_neurons = []
     for i, n in enumerate(sd_names):
@@ -407,7 +407,7 @@ def plot_raster(path, name, begin, end, N_scaling):
     plt.ylim(all_neurons[0], all_neurons[-1])
 
     plt.subplots_adjust(bottom=0.13, left=0.12, top=0.97, right=0.95)
-    plt.savefig(os.path.join(path, "raster_plot.png"))
+    plt.savefig(Path(path) / "raster_plot.png")
 
 
 #########################################################################
@@ -434,8 +434,8 @@ def firing_rates(path, name, begin, end):
     Returns
     -------
     None
-
     """
+
     sd_names, node_ids, data = _load_spike_times(path, name, begin, end)
     all_mean_rates = []
     all_std_rates = []
@@ -445,16 +445,12 @@ def firing_rates(path, name, begin, end):
         bins = np.arange(node_ids[i, 0], node_ids[i, 1] + 2)
         spike_count_per_neuron, _ = np.histogram(senders, bins=bins)
         rate_per_neuron = spike_count_per_neuron * 1000.0 / (end - begin)
-        np.savetxt(os.path.join(path, ("rate" + str(i) + ".dat")), rate_per_neuron)
+        np.savetxt(Path(path) / f"rate{i}.dat", rate_per_neuron)
         # zeros are included
         all_mean_rates.append(np.mean(rate_per_neuron))
         all_std_rates.append(np.std(rate_per_neuron))
-    print("Mean rates: {} spikes/s".format(np.around(all_mean_rates, decimals=3)))
-    print(
-        "Standard deviation of rates: {} spikes/s".format(
-            np.around(all_std_rates, decimals=3)
-        )
-    )
+    print(f"Mean rates: {np.around(all_mean_rates, decimals=3)} spikes/s")
+    print(f"Standard deviation of rates: {np.around(all_std_rates, decimals=3)} spikes/s")
 
 
 #########################################################################
@@ -476,7 +472,6 @@ def boxplot_firing_rates(path, populations):
     Returns
     -------
     None
-
     """
 
     fig_size = (4, 3)  ## figure size (inch)
@@ -489,7 +484,7 @@ def boxplot_firing_rates(path, populations):
     rates_per_neuron_rev = []
     for i in np.arange(len(populations))[::-1]:
         rates_per_neuron_rev.append(
-            np.loadtxt(os.path.join(path, ("rate" + str(i) + ".dat")))
+            np.loadtxt(Path(path) / f"rate{i}.dat")
         )
 
     ######################
@@ -544,7 +539,7 @@ def boxplot_firing_rates(path, populations):
     plt.yticks(label_pos, pop_names)
 
     plt.subplots_adjust(bottom=0.13, left=0.14, top=0.97, right=0.95)
-    plt.savefig(os.path.join(path, "box_plot.png"))
+    plt.savefig(Path(path) / "box_plot.png")
 
 
 #########################################################################
@@ -572,12 +567,12 @@ def _gather_metadata(path, name):
         Names of all spike recorders.
     node_ids
         Lowest and highest id of nodes in each population.
-
     """
+
     # load filenames
     sd_files = []
     sd_names = []
-    for fn in sorted(os.listdir(path)):
+    for fn in sorted(p.name for p in Path(path).iterdir()):
         if fn.startswith(name):
             sd_files.append(fn)
             # spike recorder name and its ID
@@ -586,7 +581,7 @@ def _gather_metadata(path, name):
                 sd_names.append(fnsplit)
 
     # load node IDs
-    node_idfile = open(path / "population_nodeids.dat", "r")
+    node_idfile = open(Path(path) / "population_nodeids.dat", "r")
     node_ids = []
     for node_id in node_idfile:
         node_ids.append(node_id.split())
@@ -616,8 +611,8 @@ def _load_spike_times(path, name, begin, end):
     data
         Dictionary containing spike times in the interval from ``begin``
         to ``end``.
-
     """
+
     sd_files, sd_names, node_ids = _gather_metadata(path, name)
     data = {}
     dtype = np.dtype(
@@ -628,7 +623,7 @@ def _load_spike_times(path, name, begin, end):
         for j, f in enumerate(sd_files):
             if name in f:
                 # skip header while loading
-                ld = np.loadtxt(os.path.join(path, f), skiprows=3, dtype=dtype)
+                ld = np.loadtxt(Path(path) / f, skiprows=3, dtype=dtype)
                 data_i_raw = np.append(data_i_raw, ld)
 
         data_i_raw = np.sort(data_i_raw, order="time_ms")
@@ -659,21 +654,16 @@ def get_data_file_list(path, label):
     -------
     files:          list(str)
                     List of file names
-
-
     """
 
     ## get list of files names
     files = []
-    for file_name in os.listdir(path):
+    for file_name in (p.name for p in Path(path).iterdir()):
         if file_name.endswith(".dat") and file_name.startswith(label):
             files += [file_name]
     files.sort()
 
-    assert len(files) > 0, 'No files of type "%s*.dat" found in path "%s".' % (
-        label,
-        path,
-    )
+    assert len(files) > 0, f'No files of type "{label}*.dat" found in path "{path}".'
 
     return files
 
@@ -708,13 +698,12 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
     -------
     spikes:   numpy.ndarray
               Lx2 array of spike senders spikes[:,0] and spike times spikes[:,1] (L = number of spikes).
-
     """
 
     if type(time_interval) == tuple:
         print(
-            "Loading spike data in interval (%.1f ms, %.1f ms] ..."
-            % (time_interval[0], time_interval[1])
+            f"Loading spike data in interval ({time_interval[0]:.1f} ms, "
+            f"{time_interval[1]:.1f} ms] ..."
         )
     else:
         print("Loading spike data...")
@@ -726,7 +715,7 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
     for file_name in files:
         try:
             buf = np.loadtxt(
-                "%s/%s" % (path, file_name), skiprows=skip_rows
+                Path(path) / file_name, skiprows=skip_rows
             )  ## load spike file while skipping the header
             if buf.shape[0] > 0:
                 if buf.shape == (2,):
@@ -735,10 +724,9 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
                     )  ## needs to be reshaped to 2-dimensional array in case there is only a single row
                 spikes += [buf]
         except:
-            print("Error: %s" % sys.exc_info()[1])
+            print(f"Error: {sys.exc_info()[1]}")
             print(
-                'Remove non-numeric entries from file %s (e.g. in file header) by specifying (optional) parameter "skip_rows".\n'
-                % (file_name)
+                f'Remove non-numeric entries from file {file_name} (e.g. in file header) by specifying (optional) parameter "skip_rows".\n'
             )
 
     if len(spikes) > 1:
@@ -751,7 +739,7 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
     spike_dict = {}
 
     if spikes.shape == (0,):
-        print("WARNING: No spikes contained in %s/%s*." % (path, label))
+        print(f"WARNING: No spikes contained in {path}/{label}*.")
         spike_dict["senders"] = np.array([])
         spike_dict["times"] = np.array([])
     else:
@@ -771,8 +759,8 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
             spikes_subset = []
             for cn, nid in enumerate(pop):  ## loop over all neurons
                 print(
-                    "Spike extraction from %d/%d (%d%%) neurons completed"
-                    % (cn + 1, len(pop), 1.0 * (cn + 1) / len(pop) * 100),
+                    f"Spike extraction from {cn + 1}/{len(pop)} "
+                    f"({int(1.0 * (cn + 1) / len(pop) * 100)}%) neurons completed",
                     end="\r",
                 )
                 ind = np.where(spikes[:, 0] == nid)[0]
@@ -815,8 +803,8 @@ def dict2json(dictionary, filename):
     Returns:
     --------
     -
-
     """
+
     to_list = lambda x: x.tolist() if isinstance(x, np.ndarray) else str(x)
 
     with open(filename, "w") as file:
@@ -839,7 +827,6 @@ def json2dict(filename):
     --------
     dictionary: dict
                 Python dictionary.
-
     """
 
     with open(filename, "r") as file:
@@ -869,7 +856,6 @@ def truncate_spike_data(spikes, interval):
 
     spikes_trunc:          dict
                            Truncated spike data.
-
     """
 
     assert type(spikes) == dict
@@ -909,8 +895,8 @@ def time_averaged_single_neuron_firing_rates(spikes, pop, interval):
     --------
     rates:                 numpy.ndarray
                            List of time averaged single neuron firing rates (spikes/s).
-
     """
+
     assert type(spikes) == dict
     assert "senders" in spikes
     assert "times" in spikes
@@ -948,7 +934,6 @@ def single_neuron_isi_cvs(spikes, pop, interval):
     --------
     cvs:                   numpy.ndarray
                            Array of single neuron ISI CVs.
-
     """
 
     assert type(spikes) == dict
@@ -1048,7 +1033,6 @@ def pairwise_spike_count_correlations(spikes, pop, interval, binsize):
     --------
     ccs:                   numpy.ndarray
                            Array of spike-count correlation coefficients for all pairs of neurons in specified population.
-
     """
 
     assert type(spikes) == dict
@@ -1110,7 +1094,6 @@ def data_distribution(data, label, unit="", hist_bin=None):
 
     stats:     dict
                Dictionary containing basic data statistics.
-
     """
 
     assert len(data) > 0
@@ -1131,8 +1114,7 @@ def data_distribution(data, label, unit="", hist_bin=None):
         return None, None, None
     else:
         print(
-            "WARNING: Data contains %d NaNs. These are ignored in the statistics."
-            % sum(nans)
+            f"WARNING: Data contains {sum(nans)} NaNs. These are ignored in the statistics."
         )
         data = np.delete(data, np.where(nans))
 
@@ -1147,13 +1129,13 @@ def data_distribution(data, label, unit="", hist_bin=None):
     stat["sd"] = np.std(data).item()
 
     print()
-    print("%s statistics:" % label)
-    print("\tsample size = %d" % (stat["sample_size"]))
-    print("\tmean        = %.3f %s" % (stat["mean"], unit))
-    print("\tmedian      = %.3f %s" % (stat["median"], unit))
-    print("\tSD          = %.3f %s" % (stat["sd"], unit))
-    print("\tmin         = %.3f %s" % (stat["min"], unit))
-    print("\tmax         = %.3f %s" % (stat["max"], unit))
+    print(f"{label} statistics:")
+    print(f"\tsample size = {stat['sample_size']}")
+    print(f"\tmean        = {stat['mean']:.3f} {unit}")
+    print(f"\tmedian      = {stat['median']:.3f} {unit}")
+    print(f"\tSD          = {stat['sd']:.3f} {unit}")
+    print(f"\tmin         = {stat['min']:.3f} {unit}")
+    print(f"\tmax         = {stat['max']:.3f} {unit}")
 
     ## histogram
     if hist_bin is None:

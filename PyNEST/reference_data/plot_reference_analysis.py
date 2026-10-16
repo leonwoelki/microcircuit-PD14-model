@@ -337,33 +337,33 @@ def plot_data_dists(
                     (observable_limits[0] + observable_limits[1]) / 2,
                 ],
                 [
-                    r"$%.1f$" % observable_limits[0],
-                    r"$%.1f$" % ((observable_limits[0] + observable_limits[1]) / 2),
+                    rf"${observable_limits[0]:.1f}$",
+                    rf"${(observable_limits[0] + observable_limits[1]) / 2:.1f}$",
                 ],
             )
             if observable_name == "spike_ccs":
                 ax_hist.set_xticks(
                     [observable_limits[0] / 2, 0, observable_limits[1] / 2],
                     [
-                        r"$%.2f$" % (observable_limits[0] / 2),
+                        rf"${observable_limits[0] / 2:.2f}$",
                         r"$0$",
-                        r"$%.2f$" % (observable_limits[1] / 2),
+                        rf"${observable_limits[1] / 2:.2f}$",
                     ],
                 )
 
         else:
             ax_hist.set_xlim(0, x_max_hist)
             ax_hist.set_xticks(
-                [0, x_max_hist / 2], [r"$0$", r"$%.0f$" % (x_max_hist / 2)]
+                [0, x_max_hist / 2], [r"$0$", rf"${x_max_hist / 2:.0f}$"]
             )
             if observable_name == "spike_ccs":
                 ax_hist.set_xlim(x_min_hist, x_max_hist)
                 ax_hist.set_xticks(
                     [x_min_hist / 2, 0, x_max_hist / 2],
                     [
-                        r"$%.2f$" % (x_min_hist / 2),
+                        rf"${x_min_hist / 2:.2f}$",
                         r"$0$",
-                        r"$%.2f$" % (x_max_hist / 2),
+                        rf"${x_max_hist / 2:.2f}$",
                     ],
                 )
 
@@ -375,10 +375,10 @@ def plot_data_dists(
             mean = np.mean(ks_values)
             std = np.std(ks_values)
 
-        textbox = r"%s" % pop
+        textbox = f"{pop}"
         if mean is not None:
             # textbox += r'\\{\tiny $D_\mathsf{KS} = %.2f$}' % mean
-            textbox += "\n$D_\mathsf{KS} = %.2f$" % mean
+            textbox += f"\n$D_\\mathsf{{KS}} = {mean:.2f}$"
 
             ax_ks.hist(ks_values, bins=n_seeds, color="gray", alpha=0.5)
             ax_ks.axvline(mean, color="red", linestyle="--", label="Mean KS-distance")
@@ -397,7 +397,7 @@ def plot_data_dists(
         ax_ks.text(
             0.95,
             0.95,
-            r"%s" % pop,
+            f"{pop}",
             transform=ax_ks.transAxes,
             fontsize=8,
             verticalalignment="top",
@@ -413,7 +413,7 @@ def plot_data_dists(
             ax_hist.set_yticks([])
 
     ax_ks.set_xlim(0, ks_max * 1.1)
-    ax_ks.set_xticks([0, ks_max / 2], [r"$0$", r"$%.2f$" % (ks_max / 2)])
+    ax_ks.set_xticks([0, ks_max / 2], [r"$0$", rf"${ks_max / 2:.2f}$"])
 
     fig_hist.text(0.5, -0.01, x_label, ha="center", va="center")
     fig_hist.savefig(
@@ -430,16 +430,12 @@ def plot_data_dists(
 
     # save figures for README.md
     fig_hist.savefig(
-        f"figures/{observable_name}_distributions_T"
-        + str(int(ref_dict["t_sim"] * 1.0e-3))
-        + "s.png",
+        f"figures/{observable_name}_distributions_T{int(ref_dict['t_sim'] * 1.0e-3)}s.png",
         bbox_inches="tight",
         pad_inches=0.02,
     )
     fig_ks.savefig(
-        f"figures/{observable_name}_KS_distances_T"
-        + str(int(ref_dict["t_sim"] * 1.0e-3))
-        + "s.png",
+        f"figures/{observable_name}_KS_distances_T{int(ref_dict['t_sim'] * 1.0e-3)}s.png",
         bbox_inches="tight",
         pad_inches=0.02,
     )
@@ -502,7 +498,7 @@ def main():
     )
     plot_data_dists(
         "spike_ccs",
-        "spike correlation coefficient\n(bin size $%.1f$ ms)" % ref_dict["binsize"],
+        f"spike correlation coefficient\n(bin size ${ref_dict['binsize']:.1f}$ ms)",
         spike_ccs_hist_mat,
         spike_ccs_best_bins,
         spike_ccs_ks_distances,
