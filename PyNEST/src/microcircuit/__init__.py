@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# network.py
+# __init__.py
 #
 # This file is part of NEST.
 #

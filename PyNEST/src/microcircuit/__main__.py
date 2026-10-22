@@ -2,7 +2,7 @@
 # encoding: utf8
 # -*- coding: utf-8 -*-
 #
-# network.py
+# __main__.py
 #
 # This file is part of NEST.
 #
@@ -88,11 +88,15 @@ def run_example(params):
     # Plot a spike raster of the simulated neurons and a box plot of the firing
     # rates for each population.
     # For visual purposes only, spikes 100 ms before and 100 ms after the thalamic
-    # stimulus time are plotted here by default.
+    # stimulus time are plotted here by default. If the simulation ends before that
+    # window, the last 200 ms of the simulation are plotted instead.
     # The computation of spike rates discards the presimulation time to exclude
     # initialization artifacts.
 
-    raster_plot_interval = np.array([params.th_start - 100.0, params.th_start + 100.0])
+    t_end = params.t_presim + params.t_sim
+    raster_plot_interval = np.array(
+        [max(0.0, min(params.th_start - 100.0, t_end - 200.0)), min(params.th_start + 100.0, t_end)]
+    )
     firing_rates_interval = np.array([params.t_presim, params.t_presim + params.t_sim])
     model.evaluate(raster_plot_interval, firing_rates_interval)
     time_evaluate = time.time()

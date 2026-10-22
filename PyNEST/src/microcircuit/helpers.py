@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# network.py
+# helpers.py
 #
 # This file is part of NEST.
 #
@@ -24,6 +24,7 @@ Helper functions for network construction, simulation and evaluation of the micr
 """
 
 import os
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
