@@ -22,20 +22,17 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 """
-This file contains the definition of all microcircuit-PD14 parameters,
-including (default) values, physical units, descriptions, latex notations, and
-sections for a classification of parameters.
+This file contains the definition of all microcircuit-PD14 parameters, including (default) values,
+physical units, descriptions, latex notations, and sections for a classification of parameters.
 
-The parameter definition is an instance of the Pydantic BaseModel class, which
-allows for validation of parameters and generation of a JSON schema. The JSON
-schema can be used for an automated generation of a YAML configuration file
-(see `generate_example_config()`). This YAML file can serve as a template for
-user-defined configuration files, which can be loaded into the model and
-validated against the JSON schema (see `load_parameters_from_yaml()`).
+The parameter definition is an instance of the Pydantic BaseModel class, which allows for validation
+of parameters and generation of a JSON schema. The JSON schema can be used for an automated
+generation of a YAML configuration file (see `generate_example_config()`). This YAML file can serve
+as a template for user-defined configuration files, which can be loaded into the model and validated
+against the JSON schema (see `load_parameters_from_yaml()`).
 
-Secondary parameters are derived from the primary parameters by defining
-"computed_fields". When loading user-defined parameters from a YAML
-file, the computed fields are automatically updated.
+Secondary parameters are derived from the primary parameters by defining "computed_fields". When
+loading user-defined parameters from a YAML file, the computed fields are automatically updated.
 """
 
 ####################################
@@ -127,8 +124,10 @@ class Parameters(BaseModel):
         ),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Connection probabilities for each pair of pre- and postsynaptic "
-        r"populations $x$ and $y$ (first index: target; second index: source)",
+        description=(
+            r"Connection probabilities for each pair of pre- and postsynaptic populations $x$ and "
+            r"$y$ (first index: target; second index: source)"
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$C_{yx}$",
@@ -143,8 +142,10 @@ class Parameters(BaseModel):
         default=(0.903, 2.965, 4.414, 5.876, 7.569, 8.633, 1.105, 7.829),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Mean firing rates of the different populations $x$ in the non-scaled version of the microcircuit "
-        "(same order as in `populations`; required for network scaling).",
+        description=(
+            r"Mean firing rates of the different populations $x$ in the non-scaled version of the "
+            r"microcircuit (same order as in `populations`; required for network scaling)."
+        ),
         json_schema_extra={
             "unit": "spikes/s",
             "latex": r"$\tilde{\nu}_x$",
@@ -166,8 +167,10 @@ class Parameters(BaseModel):
         default=(1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Number of cortico-cortical inputs per neuron (in-degree) "
-        "in the full-scalenework for each cortical population $y$ (same order as in `populations`).",
+        description=(
+            r"Number of cortico-cortical inputs per neuron (in-degree) in the full-scalenework for "
+            r"each cortical population $y$ (same order as in `populations`)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$\tilde{K}_{\mathcal{C}_y}$",
@@ -347,7 +350,10 @@ class Parameters(BaseModel):
     delay_cv: float = Field(
         default=0.5,
         ge=0,
-        description=r"Coefficient of variation of delay distributions (ratio between standard deviation and mean).",
+        description=(
+            r"Coefficient of variation of delay distributions "
+            r"(ratio between standard deviation and mean)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$\text{CV}_\text{d}$",
@@ -360,7 +366,11 @@ class Parameters(BaseModel):
 
     V0_type: Literal["original", "optimized"] = Field(
         default="optimized",
-        description=r"Type of initial condition for the membrane potentials ('original' or 'optimized'). 'original': uniform mean and standard deviation for all populations. 'optimized': population-specific mean and standard deviation (default).",
+        description=(
+            r"Type of initial condition for the membrane potentials ('original' or 'optimized'). "
+            r"'original': uniform mean and standard deviation for all populations. 'optimized': "
+            r"population-specific mean and standard deviation (default)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"V0\_type",
@@ -380,7 +390,9 @@ class Parameters(BaseModel):
 
     V0_std_original: float = Field(
         default=10.0,
-        description=r"Standard deviation of initial membrane potentials in case V0_type = 'original'.",
+        description=(
+            r"Standard deviation of initial membrane potentials in case V0_type = 'original'."
+        ),
         json_schema_extra={
             "unit": "mV",
             "latex": r"$V0\_std\_original$",
@@ -392,7 +404,10 @@ class Parameters(BaseModel):
         default=(-68.28, -63.16, -63.33, -63.45, -63.11, -61.66, -66.72, -61.43),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Population-specific mean of initial membrane potentials in case V0_type = 'optimized' (same order as in `populations`).",
+        description=(
+            r"Population-specific mean of initial membrane potentials in case V0_type = "
+            r"'optimized' (same order as in `populations`)."
+        ),
         json_schema_extra={
             "unit": "mV",
             "latex": r"$V0\_mean\_optimized$",
@@ -404,7 +419,10 @@ class Parameters(BaseModel):
         default=(5.36, 4.57, 4.74, 4.94, 4.94, 4.55, 5.46, 4.48),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Population-specific standard deviation of initial membrane potentials in case V0_type = 'optimized' (same order as in `populations`).",
+        description=(
+            r"Population-specific standard deviation of initial membrane potentials in case "
+            r"V0_type = 'optimized' (same order as in `populations`)."
+        ),
         json_schema_extra={
             "unit": "mV",
             "latex": r"$V0\_std\_optimized$",
@@ -472,7 +490,10 @@ class Parameters(BaseModel):
         default=(0.0, 0.0, 0.0983, 0.0619, 0.0, 0.0, 0.0512, 0.0196),
         max_length=len(populations),
         min_length=len(populations),
-        description=r"Probabilities of connections from the thalamus to each cortical populations $y$ (same order as in `populations`).",
+        description=(
+            r"Probabilities of connections from the thalamus to each cortical populations $y$ "
+            r"(same order as in `populations`)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$C_{y,\mathcal{T}}$",
@@ -514,7 +535,10 @@ class Parameters(BaseModel):
 
     dc_transient_amp: float = Field(
         default=0.3,
-        description=r"Amplitude of transient DC input (final amplitude is population-specific and will be obtained by multiplication with 'K_CC_full').",
+        description=(
+            r"Amplitude of transient DC input (final amplitude is population-specific and will be "
+            r"obtained by multiplication with 'K_CC_full')."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_\text{DC}$",
@@ -559,10 +583,13 @@ class Parameters(BaseModel):
     )
 
     rec_dev: tuple[Literal["spike_recorder", "voltmeter"], ...] = Field(
-        # Literal rejects unsupported device names; the tuple is immutable so no shared-default risk.
+        # Literal rejects unsupported device names; the tuple is immutable so no shared-default
+        # risk.
         default=("spike_recorder",),
-        description=r"List of recording devices ('spike_recorder' [default] and/or 'voltmeter'). "
-        r"Nothing will be recorded if an empty list is given.",
+        description=(
+            r"List of recording devices ('spike_recorder' [default] and/or 'voltmeter'). Nothing "
+            r"will be recorded if an empty list is given."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"rec\_dev",
@@ -573,8 +600,8 @@ class Parameters(BaseModel):
     data_path: Path = Field(
         default=Path("data"),
         description=(
-            "Path for storage of simulation data and metadata. "
-            "Relative paths are resolved against the current working directory."
+            "Path for storage of simulation data and metadata. Relative paths are resolved against "
+            "the current working directory."
         ),
         json_schema_extra={
             "unit": "",
@@ -587,8 +614,8 @@ class Parameters(BaseModel):
         default=55,
         gt=0,
         description=(
-            "Seed for NEST random number generator "
-            "(used for connectivity, initial conditions, and Poissonian spike input)."
+            "Seed for NEST random number generator (used for connectivity, "
+            "initial conditions, and Poissonian spike input)."
         ),
         json_schema_extra={
             "unit": "",
@@ -601,11 +628,9 @@ class Parameters(BaseModel):
         default=4,
         ge=1,
         description=(
-            "Number of threads per MPI process. "
-            "Note: when up-scaling the network, "
-            "the model may not run correctly if there are < 4 virtual processes "
-            "(i.e, a thread in an MPI process)."
-            " If there are 4 or more MPI processes, this value can be set to 1."
+            "Number of threads per MPI process. Note: when up-scaling the network, the model may "
+            "not run correctly if there are < 4 virtual processes (i.e, a thread in an MPI "
+            "process). If there are 4 or more MPI processes, this value can be set to 1."
         ),
         json_schema_extra={
             "unit": "",
@@ -627,7 +652,10 @@ class Parameters(BaseModel):
 
     overwrite_files: bool = Field(
         default=True,
-        description=r"If 'True' (default), existing files will be overwritten. If 'False', a NESTError is raised if the files already exist.",
+        description=(
+            r"If 'True' (default), existing files will be overwritten. If 'False', a NESTError is "
+            r"raised if the files already exist."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"overwrite\_files",
@@ -637,7 +665,10 @@ class Parameters(BaseModel):
 
     print_time: bool = Field(
         default=True,
-        description=r"If 'True' (default), the simulation progress is printed. This should only be used if the simulation is run on a local machine.",
+        description=(
+            r"If 'True' (default), the simulation progress is printed. This should only be used if "
+            r"the simulation is run on a local machine."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"print\_time",
@@ -647,7 +678,10 @@ class Parameters(BaseModel):
 
     store_metadata: bool = Field(
         default=True,
-        description=r"If 'True' (default), metadata (parameter values, node IDs, and software requirements) will be stored together with the simulation data. ",
+        description=(
+            r"If 'True' (default), metadata (parameter values, node IDs, and software "
+            r"requirements) will be stored together with the simulation data. "
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"store\_metadata",
@@ -671,8 +705,14 @@ class Parameters(BaseModel):
 
     @computed_field(
         ## TODO: extract LaTeX strings of primary parameters when using them in descriptions
-        # description=r"Number of neurons in each population; $N_x=$%s%s ($\forall x\in\mathcal{P}$)." % (latex("N_scaling"), latex("full_num_neurons")), ## not working (yet)
-        description=r"Number of neurons in each cortical population $x$; $N_x=\alpha_N \tilde{N}_{x,\text{full}}$ ($\forall x\in\mathcal{P}$).",
+        ## not working (yet):
+        # description=r"Number of neurons in each population; "
+        # r"$N_x=$%s%s ($\forall x\in\mathcal{P}$)."
+        # % (latex("N_scaling"), latex("full_num_neurons")),
+        description=(
+            r"Number of neurons in each cortical population $x$; "
+            r"$N_x=\alpha_N \tilde{N}_{x,\text{full}}$ ($\forall x\in\mathcal{P}$)."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$N_x$",
@@ -681,11 +721,7 @@ class Parameters(BaseModel):
     )
     @property
     def num_neurons(self) -> list:
-        return (
-            np.round(self.N_scaling * np.array(self.full_num_neurons))
-            .astype(int)
-            .tolist()
-        )
+        return np.round(self.N_scaling * np.array(self.full_num_neurons)).astype(int).tolist()
 
     @computed_field(
         description=r"Number of local cortical populations.",
@@ -700,7 +736,10 @@ class Parameters(BaseModel):
         return len(self.populations)
 
     @computed_field(
-        description=r"Total number of connections between cortical populations in the full-scale network, for each pair of presynaptic and postsynaptic populations $x$ and $y$.",
+        description=(
+            r"Total number of connections between cortical populations in the full-scale network, "
+            r"for each pair of presynaptic and postsynaptic populations $x$ and $y$."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$\tilde{Q}_{yx}$",
@@ -714,7 +753,11 @@ class Parameters(BaseModel):
         ).tolist()
 
     @computed_field(
-        description=r"Total number of connections between neuronal populations, for each pair of presynaptic and postsynaptic cortical populations $x$ and $y$; $Q_{yx}=\alpha_N \alpha_K \tilde{Q}_{yx}$",
+        description=(
+            r"Total number of connections between neuronal populations, for each pair of "
+            r"presynaptic and postsynaptic cortical populations $x$ and $y$; "
+            r"$Q_{yx}=\alpha_N \alpha_K \tilde{Q}_{yx}$"
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$Q_{yx}$",
@@ -730,7 +773,10 @@ class Parameters(BaseModel):
         )
 
     @computed_field(
-        description=r"Number of cortico-cortical inputs per neuron (in-degree) for each cortical populations $y$; $K_{\mathcal{C}_x}=\alpha_K \tilde{K}_{\mathcal{C}_x}$",
+        description=(
+            r"Number of cortico-cortical inputs per neuron (in-degree) for each cortical "
+            r"populations $y$; $K_{\mathcal{C}_x}=\alpha_K \tilde{K}_{\mathcal{C}_x}$"
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$K_{\mathcal{C}_x}$",
@@ -742,25 +788,28 @@ class Parameters(BaseModel):
         return np.round(np.array(self.K_CC_full) * self.K_scaling).astype(int).tolist()
 
     @computed_field(
-        description=r"Unit PSP amplitude (ratio between PSP and PSC amplitude; conversion factor for synaptic weights).",
+        description=(
+            r"Unit PSP amplitude (ratio between PSP and PSC "
+            r"amplitude; conversion factor for synaptic weights)."
+        ),
         json_schema_extra={
             "unit": "mV/pA",
-            "latex": r"$J_\text{unit}$",  ## see eq.(11) in https://microcircuit-pd14-model.readthedocs.io/en/latest/_static/microcircuit-pd14-model.pdf
+            # see eq.(11) in
+            # https://microcircuit-pd14-model.readthedocs.io/en/latest/_static/microcircuit-pd14-model.pdf
+            "latex": r"$J_\text{unit}$",
             "section": r"synapse_derived",
         },
     )
     @property
     def J_unit(self) -> float:
-        return 1 / helpers.postsynaptic_potential_to_current(
-            self.C_m, self.tau_m, self.tau_syn
-        )
+        return 1 / helpers.postsynaptic_potential_to_current(self.C_m, self.tau_m, self.tau_syn)
 
     def _scaled_recurrent_weights_and_dc(self) -> tuple:
-        """Base recurrent/external weights and DC input, jointly adjusted for
-        K_scaling (see helpers.adjust_weights_and_input_to_synapse_scaling;
-        a no-op when K_scaling == 1). Computes bases inline rather than via
-        self.PSC_ext/self.DC_amp, since those properties return this method's
-        *output* - reusing them here would recurse.
+        """Base recurrent/external weights and DC input, jointly adjusted for K_scaling.
+
+        See helpers.adjust_weights_and_input_to_synapse_scaling; a no-op when K_scaling == 1.
+        Computes bases inline rather than via self.PSC_ext/self.DC_amp, since those properties
+        return this method's *output* - reusing them here would recurse.
         """
 
         base_psc_matrix = np.array(self.PSP_matrix_mean) / self.J_unit
@@ -788,7 +837,11 @@ class Parameters(BaseModel):
         )
 
     @computed_field(
-        description=r"Matrix of mean PSC amplitudes for all pairs of presynaptic and postsynaptic cortical populations; $\bar{I}_{yx}=J_{yx}/J_\text{unit}$, adjusted for indegree scaling ($\alpha_K\neq 1$) to preserve the mean and variance of the recurrent input.",
+        description=(
+            r"Matrix of mean PSC amplitudes for all pairs of presynaptic and postsynaptic cortical "
+            r"populations; $\bar{I}_{yx}=J_{yx}/J_\text{unit}$, adjusted for indegree scaling "
+            r"($\alpha_K\neq 1$) to preserve the mean and variance of the recurrent input."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$\bar{I}_{yx}$",
@@ -800,7 +853,10 @@ class Parameters(BaseModel):
         return self._scaled_recurrent_weights_and_dc()[0].tolist()
 
     @computed_field(
-        description=r"Mean PSC amplitude of cortico-cortical inputs; $\bar{I}_\text{CC}=J/J_\text{unit}$, adjusted for indegree scaling ($\alpha_K\neq 1$).",
+        description=(
+            r"Mean PSC amplitude of cortico-cortical inputs; $\bar{I}_\text{CC}=J/J_\text{unit}$, "
+            r"adjusted for indegree scaling ($\alpha_K\neq 1$)."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$\bar{I}_\text{CC}$",
@@ -812,15 +868,16 @@ class Parameters(BaseModel):
         return float(self._scaled_recurrent_weights_and_dc()[1])
 
     @computed_field(
-        description=r"DC input amplitude for each cortical population $x$, replacing the "
-        r"cortico-cortical Poisson input (if `CC_type='dc'`) and "
-        r"compensating for indegree scaling ($\alpha_K\neq 1$) such that the mean and "
-        r"variance of the total input are preserved; "
-        r"$I_{\text{DC},x}=I_{\mathcal{C}_x}+(1-\sqrt{\alpha_K})\,\mu_{x,\text{loc}}$ "
-        r"if `CC_type='dc'`, "
-        r"$I_{\text{DC},x}=(1-\sqrt{\alpha_K})\,(\mu_{x,\text{loc}}+I_{\mathcal{C}_x})$ "
-        r"if `CC_type='poisson'`, "
-        r"with the mean local synaptic input current $\mu_{x,\text{loc}}$ of the full-scale network.",
+        description=(
+            r"DC input amplitude for each cortical population $x$, replacing the cortico-cortical "
+            r"Poisson input (if `CC_type='dc'`) and compensating for indegree scaling "
+            r"($\alpha_K\neq 1$) such that the mean and variance of the total input are preserved; "
+            r"$I_{\text{DC},x}=I_{\mathcal{C}_x}+(1-\sqrt{\alpha_K})\,\mu_{x,\text{loc}}$ "
+            r"if `CC_type='dc'`, "
+            r"$I_{\text{DC},x}=(1-\sqrt{\alpha_K})\,(\mu_{x,\text{loc}}+I_{\mathcal{C}_x})$ "
+            r"if `CC_type='poisson'`, with the mean local synaptic input current "
+            r"$\mu_{x,\text{loc}}$ of the full-scale network."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_{\text{DC},x}$",
@@ -832,9 +889,10 @@ class Parameters(BaseModel):
         return self._scaled_recurrent_weights_and_dc()[2].tolist()
 
     @computed_field(
-        description=r"Cortical populations whose (indegree-scaling-adjusted) DC input "
-        r"amplitude falls below the rheobase current; always empty unless "
-        r"`CC_type='dc'`.",
+        description=(
+            r"Cortical populations whose (indegree-scaling-adjusted) DC input amplitude falls "
+            r"below the rheobase current; always empty unless `CC_type='dc'`."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$\{x : I_{\text{DC},x} < I_\text{rh}\}$",
@@ -845,9 +903,7 @@ class Parameters(BaseModel):
     def subthreshold_populations(self) -> list:
         if self.CC_type != "dc":
             return []
-        I_rh = helpers.compute_rheo_base_current(
-            self.V_th, self.V_rest, self.C_m, self.tau_m
-        )
+        I_rh = helpers.compute_rheo_base_current(self.V_th, self.V_rest, self.C_m, self.tau_m)
         dc_amp = self._scaled_recurrent_weights_and_dc()[2]
         return [pop for pop, dc in zip(self.populations, dc_amp) if dc < I_rh]
 
@@ -870,9 +926,11 @@ class Parameters(BaseModel):
     ## derived synapse parameters
 
     @computed_field(
-        description=r"Matrix containing mean synaptic weights (PSP amplitudes) for all pairs "
-        r"of presynaptic and postsynaptic populations. The L4E$\to$L2/3E connection "
-        r"($[0,2]$) is doubled relative to the other excitatory connections.",
+        description=(
+            r"Matrix containing mean synaptic weights (PSP amplitudes) for all pairs of "
+            r"presynaptic and postsynaptic populations. The L4E$\to$L2/3E connection ($[0,2]$) is "
+            r"doubled relative to the other excitatory connections."
+        ),
         json_schema_extra={
             "unit": "mV",
             "latex": r"$J_{yx}$ ($\forall y,x\in\mathcal{P}$)",
@@ -888,7 +946,10 @@ class Parameters(BaseModel):
         return matrix.tolist()
 
     @computed_field(
-        description=r"Matrix containing mean spike transmission delays all pairs of presynaptic and postsynaptic populations.",
+        description=(
+            r"Matrix containing mean spike transmission delays all "
+            r"pairs of presynaptic and postsynaptic populations."
+        ),
         json_schema_extra={
             "unit": "ms",
             "latex": r"$d_{yx}$ ($\forall y,x\in\mathcal{P}$)",
@@ -904,8 +965,10 @@ class Parameters(BaseModel):
     ###################################
     ## derived stimulus parameters
     @computed_field(
-        description=r"Number of thalamocortical synapses onto each cortical population $x$; "
-        r"$Q_{x,\text{th}}=\alpha_K \tilde{Q}_{x,\text{th}}$.",
+        description=(
+            r"Number of thalamocortical synapses onto each cortical population $x$; "
+            r"$Q_{x,\text{th}}=\alpha_K \tilde{Q}_{x,\text{th}}$."
+        ),
         json_schema_extra={
             "unit": "",
             "latex": r"$Q_{x,\text{th}}$",
@@ -922,8 +985,10 @@ class Parameters(BaseModel):
         return np.round(num_th_synapses).astype(int).tolist()
 
     @computed_field(
-        description=r"Mean PSC amplitude of thalamocortical inputs; "
-        r"$\bar{I}_\text{th}=\bar{I}_\text{CC}/\sqrt{\alpha_K}$.",
+        description=(
+            r"Mean PSC amplitude of thalamocortical inputs; "
+            r"$\bar{I}_\text{th}=\bar{I}_\text{CC}/\sqrt{\alpha_K}$."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$\bar{I}_\text{th}$",
@@ -941,8 +1006,10 @@ class Parameters(BaseModel):
         return float(weight_th)
 
     @computed_field(
-        description=r"Mean spike transmission delay of thalamocortical inputs; "
-        r"tied to `delay_exc_mean` (same convention as `weight_th`/`weight_exc_mean`).",
+        description=(
+            r"Mean spike transmission delay of thalamocortical inputs; tied to `delay_exc_mean` "
+            r"(same convention as `weight_th`/`weight_exc_mean`)."
+        ),
         json_schema_extra={
             "unit": "ms",
             "latex": r"$\bar{d}_\text{th}$",
@@ -954,13 +1021,13 @@ class Parameters(BaseModel):
         return self.delay_exc_mean
 
     @computed_field(
-        description=r"Mean current generated by a single cortico-cortical "
-        r"input spike train with rate $\nu_\text{CC}$, convolved with an "
-        r"exponential kernel of amplitude $\bar{I}_\text{CC}$ and time "
-        r"constant $\tau_\text{s}$; "
-        r"$I_\text{CC}=\bar{I}_\text{CC}\,\tau_\text{s}\,\nu_\text{CC}$. "
-        r"Always computed at full (unscaled) amplitude, independent of "
-        r"`CC_type` or indegree scaling.",
+        description=(
+            r"Mean current generated by a single cortico-cortical input spike train with rate "
+            r"$\nu_\text{CC}$, convolved with an exponential kernel of amplitude "
+            r"$\bar{I}_\text{CC}$ and time constant $\tau_\text{s}$; "
+            r"$I_\text{CC}=\bar{I}_\text{CC}\,\tau_\text{s}\,\nu_\text{CC}$. Always computed at "
+            r"full (unscaled) amplitude, independent of `CC_type` or indegree scaling."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_\text{CC}$",
@@ -980,11 +1047,11 @@ class Parameters(BaseModel):
         )
 
     @computed_field(
-        description=r"Mean total current generated by cortico-cortical inputs "
-        r"onto each cortical population $x$; "
-        r"$I_{\mathcal{C}_x}=\tilde{K}_{\mathcal{C}_x}\,I_\text{CC}$. "
-        r"Always computed at full (unscaled) amplitude, independent of "
-        r"`CC_type` or indegree scaling.",
+        description=(
+            r"Mean total current generated by cortico-cortical inputs onto each cortical "
+            r"population $x$; $I_{\mathcal{C}_x}=\tilde{K}_{\mathcal{C}_x}\,I_\text{CC}$. Always "
+            r"computed at full (unscaled) amplitude, independent of `CC_type` or indegree scaling."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_{\mathcal{C}_x}$",
@@ -996,8 +1063,9 @@ class Parameters(BaseModel):
         return (np.array(self.K_CC_full) * self.I_CC).tolist()
 
     @computed_field(
-        description=r"Stop time of thalamic input; "
-        r"$t_\text{TC,stop}=t_\text{TC,start}+\Delta_\text{TC}$.",
+        description=(
+            r"Stop time of thalamic input; $t_\text{TC,stop}=t_\text{TC,start}+\Delta_\text{TC}$."
+        ),
         json_schema_extra={
             "unit": "ms",
             "latex": r"$t_\text{TC,stop}$",
@@ -1009,8 +1077,10 @@ class Parameters(BaseModel):
         return self.th_start + self.th_duration
 
     @computed_field(
-        description=r"Stop time of transient DC input; "
-        r"$t_\text{stop}^\text{DC}=t_\text{start}^\text{DC}+\Delta_\text{DC}$.",
+        description=(
+            r"Stop time of transient DC input; "
+            r"$t_\text{stop}^\text{DC}=t_\text{start}^\text{DC}+\Delta_\text{DC}$."
+        ),
         json_schema_extra={
             "unit": "ms",
             "latex": r"$t_\text{stop}^\text{DC}$",
@@ -1022,8 +1092,10 @@ class Parameters(BaseModel):
         return self.dc_transient_start + self.dc_transient_dur
 
     @computed_field(
-        description=r"Population-specific amplitude of transient DC input onto "
-        r"each cortical population $x$; $I_{DC,x}^\text{transient}=A_\text{DC}\,\tilde{K}_{\mathcal{C}_x}$.",
+        description=(
+            r"Population-specific amplitude of transient DC input onto each cortical population "
+            r"$x$; $I_{DC,x}^\text{transient}=A_\text{DC}\,\tilde{K}_{\mathcal{C}_x}$."
+        ),
         json_schema_extra={
             "unit": "pA",
             "latex": r"$I_{DC,x}^\text{transient}$",
@@ -1042,23 +1114,21 @@ class Parameters(BaseModel):
     @classmethod
     def from_yaml(cls, filename: "str | os.PathLike", **overrides) -> "Parameters":
         """
-        Constructs a Parameters instance from class defaults, overlaid with the
-        values in a YAML file, overlaid with keyword overrides.
+        Constructs a Parameters instance from class defaults, overlaid with the values in a YAML
+        file, overlaid with keyword overrides.
 
-        The YAML file only needs to contain the parameters that should differ
-        from the defaults (see `generate_example_config()` for a template).
-        Keyword overrides are meant for per-job values that do not belong in
-        a shared experiment file, e.g. `rng_seed` or `data_path`.
+        The YAML file only needs to contain the parameters that should differ from the defaults
+        (see `generate_example_config()` for a template). Keyword overrides are meant for per-job
+        values that do not belong in a shared experiment file, e.g. `rng_seed` or `data_path`.
 
-        The result is validated as a whole: if any value is invalid, no
-        instance is created.
+        The result is validated as a whole: if any value is invalid, no instance is created.
 
         Parameters:
         -----------
 
         filename: str or path-like
-            Path to the YAML file. An empty file (or one with only comments)
-            is valid and yields the defaults.
+            Path to the YAML file. An empty file (or one with only comments) is valid and
+            yields the defaults.
 
         **overrides
             Parameter values applied on top of the file contents.
@@ -1079,8 +1149,7 @@ class Parameters(BaseModel):
             loaded = {}
         if not isinstance(loaded, dict):
             raise TypeError(
-                f"{filename}: expected a YAML mapping of parameter names to values, "
-                f"got {type(loaded).__name__}."
+                f"{filename}: expected a YAML mapping of parameter names to values, got {type(loaded).__name__}."
             )
 
         return cls.model_validate({**loaded, **overrides})
@@ -1106,10 +1175,9 @@ class Parameters(BaseModel):
 #########################################################################
 def generate_example_config(filename="params_default.yaml", mode="validation") -> None:
     """
-    Generates a YAML template listing all primary parameters defined in the
-    Parameters class. Every parameter is written as a commented-out line
-    showing its default value, followed by its metadata (description, unit,
-    LaTeX symbol, and section) as comments. The parameters are listed in the
+    Generates a YAML template listing all primary parameters defined in the Parameters class. Every
+    parameter is written as a commented-out line showing its default value, followed by its metadata
+    (description, unit, LaTeX symbol, and section) as comments. The parameters are listed in the
     order they are defined in the Parameters class.
 
     The template is meant as a sparse override file: the user uncomments and
@@ -1131,8 +1199,8 @@ def generate_example_config(filename="params_default.yaml", mode="validation") -
           'validation' (default): only primary parameters are included.
 
           'serialization': both primary and secondary parameters are included;
-                           secondary parameters are included without values, as
-                           they will be automatically updated
+                           secondary parameters are included without
+                           values, as they will be automatically updated
     """
 
     schema = Parameters.model_json_schema(mode=mode)
@@ -1140,21 +1208,13 @@ def generate_example_config(filename="params_default.yaml", mode="validation") -
     with open(filename, "w") as yaml_file:
         yaml_file.write("# This file is autogenerated by generate_example_config().\n")
         yaml_file.write("#\n")
-        yaml_file.write(
-            "# Uncomment and edit only the parameters you want to change.\n"
-        )
-        yaml_file.write(
-            "# Every parameter that stays commented out takes its default value\n"
-        )
+        yaml_file.write("# Uncomment and edit only the parameters you want to change.\n")
+        yaml_file.write("# Every parameter that stays commented out takes its default value\n")
         yaml_file.write("# from the Parameters class (parameter_definitions.py).\n")
         yaml_file.write("# The values shown here are those defaults.\n")
         yaml_file.write("#\n")
-        yaml_file.write(
-            "# To modify defaults or metadata (descriptions, units, LaTeX symbols),\n"
-        )
-        yaml_file.write(
-            "# edit the parameter definitions in parameter_definitions.py\n"
-        )
+        yaml_file.write("# To modify defaults or metadata (descriptions, units, LaTeX symbols),\n")
+        yaml_file.write("# edit the parameter definitions in parameter_definitions.py\n")
         yaml_file.write("# and run generate_example_config() again.\n")
         yaml_file.write("\n")
 
@@ -1175,11 +1235,11 @@ def generate_example_config(filename="params_default.yaml", mode="validation") -
 
 #########################################################################
 
+
 def load_parameters_from_yaml(filename) -> Parameters:
     """
-    Loads parameters from a YAML file and validates them against the Parameters
-    class. Thin wrapper around `Parameters.from_yaml()`, kept for backwards
-    compatibility.
+    Loads parameters from a YAML file and validates them against the Parameters class. Thin wrapper
+    around `Parameters.from_yaml()`, kept for backwards compatibility.
     """
 
     return Parameters.from_yaml(filename)
@@ -1187,10 +1247,9 @@ def load_parameters_from_yaml(filename) -> Parameters:
 
 def example_params_file() -> Path:
     """
-    Returns the path of the small parameter override file shipped with the
-    package (`example_params.yaml`). It scales the network down so that the
-    bundled entry points (`microcircuit run`, the reference data generator)
-    never run the full-scale model by accident.
+    Returns the path of the small parameter override file shipped with the package
+    (`example_params.yaml`). It scales the network down so that the bundled entry points
+    (`microcircuit run`, the reference data generator) never run the full-scale model by accident.
     """
 
     return Path(str(files("microcircuit") / "example_params.yaml"))
@@ -1201,16 +1260,14 @@ def example_params_file() -> Path:
 
 def test_parameter_loading(filename) -> None:
     """
-    Test function for loading parameters from a YAML file. It loads parameters
-    from a YAML file, and checks if they match the original parameters defined
-    in the Parameters class.
+    Test function for loading parameters from a YAML file. It loads parameters from a YAML file, and
+    checks if they match the original parameters defined in the Parameters class.
 
     Parameters:
     -----------
 
     filename: str
-              Path to the YAML file containing the parameters to be loaded and
-              tested.
+              Path to the YAML file containing the parameters to be loaded and tested.
     """
 
     params = Parameters()
@@ -1220,9 +1277,9 @@ def test_parameter_loading(filename) -> None:
 
     test_params = load_parameters_from_yaml(filename)
 
-    assert params == test_params, (
-        "Validation failed: Loaded parameters do not match the original defaults."
-    )
+    assert (
+        params == test_params
+    ), "Validation failed: Loaded parameters do not match the original defaults."
 
 
 #########################################################################

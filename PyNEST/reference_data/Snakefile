@@ -109,7 +109,7 @@ onsuccess:
 ##############################################################################################
 def test_success():
     print("="*60)
-    print("✅ All tests completed successfully!")
+    print("All tests completed successfully!")
     print(f"  • Simulations ran for seeds: {SEEDS}")
     print("  • Analysis and ensemble statistics finished")
     print("  • Plots generated")

@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-'''
+"""
 Unit test including network creation, connection and simulation.
-'''
+"""
 
 #####################
 import nest
@@ -21,6 +21,7 @@ from microcircuit.model import Model
 from microcircuit.parameter_definitions import Parameters
 
 #####################
+
 
 def test_simulation():
 
@@ -54,18 +55,18 @@ def test_simulation():
         result = run_simulation()
 
     except Exception as e:
-        pytest.fail(f'Simulation raised an exception: {e}')
+        pytest.fail(f"Simulation raised an exception: {e}")
 
     assert result is not None
 
-    print('======================================')
-    print('')
-    print('Test passed')
-    print('')
-    print('microcircuit.simulate() runs correctly')
-    print('')
-    print('======================================')
+    print("======================================")
+    print("")
+    print("Test passed")
+    print("")
+    print("microcircuit.simulate() runs correctly")
+    print("")
+    print("======================================")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_simulation()
-

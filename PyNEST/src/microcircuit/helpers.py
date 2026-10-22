@@ -5,27 +5,22 @@
 # This file is part of NEST.
 #
 # Copyright (C) 2004 The NEST Initiative
+# NEST is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
 #
-# NEST is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
+# NEST is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
 #
-# NEST is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with NEST.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with NEST.
+# If not, see <http://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 """PyNEST Microcircuit: Helper Functions
 -------------------------------------------
 
-Helper functions for network construction, simulation and evaluation of the
-microcircuit.
+Helper functions for network construction, simulation and evaluation of the microcircuit.
 """
 
 import os
@@ -63,13 +58,12 @@ def message(text):
 
 def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> np.ndarray:
     """
-    Creates a matrix of size `num_pops` x `num_pops`, where columns with even
-    indices (0, 2, 4, ...) are filled with `val_exc`, and columns with odd
-    indices (1, 3, 5, ...) are filled with `val_inh`. This is used to create
-    matrices of synaptic weights or delays for all pairs of presynaptic and
-    postsynaptic populations, based on the assumption that populations with
-    even indices in the `populations` list are excitatory and populations with
-    odd indices are inhibitory.
+    Creates a matrix of size `num_pops` x `num_pops`,
+    where columns with even indices (0, 2, 4, ...) are filled with `val_exc`,
+    and columns with odd indices (1, 3, 5, ...) are filled with `val_inh`.
+    This is used to create matrices of synaptic weights or delays for all pairs of presynaptic
+    and postsynaptic populations, based on the assumption that populations
+    with even indices in the `populations` list are excitatory and populations with odd indices are inhibitory.
 
     Parameters:
     -----------
@@ -100,8 +94,7 @@ def get_exc_inh_matrix(val_exc, val_inh, num_pops) -> np.ndarray:
 
 
 def num_synapses_from_conn_probs(conn_probs, popsize1, popsize2):
-    """Computes the total number of synapses between two populations from
-    connection probabilities.
+    """Computes the total number of synapses between two populations from connection probabilities.
 
     Here it is irrelevant which population is source and which target.
 
@@ -132,30 +125,23 @@ def num_synapses_from_conn_probs(conn_probs, popsize1, popsize2):
 def postsynaptic_potential_to_current(C_m, tau_m, tau_syn):
     r"""Computes a factor to convert postsynaptic potentials to currents.
 
-    The time course of the postsynaptic potential ``v`` is computed as
-    :math: `v(t)=(i*h)(t)`
-    with the exponential postsynaptic current
-    :math:`i(t)=J\mathrm{e}^{-t/\tau_\mathrm{syn}}\Theta (t)`,
-    the voltage impulse response
-    :math:`h(t)=\frac{1}{\tau_\mathrm{m}}\mathrm{e}^{-t/\tau_\mathrm{m}}\Theta (t)`,
-    and
-    :math:`\Theta(t)=1` if :math:`t\geq 0` and zero otherwise.
+    The time course of the postsynaptic potential ``v`` is computed as :math: `v(t)=(i*h)(t)` with
+    the exponential postsynaptic current :math:`i(t)=J\mathrm{e}^{-t/\tau_\mathrm{syn}}\Theta (t)`,
+    the voltage impulse response :math:`h(t)=\frac{1}{\tau_\mathrm{m}}\mathrm{e}^{-t/\tau_\mathrm{m}}\Theta (t)`,
+    and :math:`\Theta(t)=1` if :math:`t\geq 0` and zero otherwise.
 
-    The ``PSP`` is considered as the maximum of ``v``, i.e., it is
-    computed by setting the derivative of ``v(t)`` to zero.
-    The expression for the time point at which ``v`` reaches its maximum
-    can be found in Eq. 5 of [1]_.
+    The ``PSP`` is considered as the maximum of ``v``, i.e.,
+    it is computed by setting the derivative of ``v(t)`` to zero.
+    The expression for the time point at which ``v`` reaches its maximum can be found in Eq. 5 of [1]_.
 
-    The amplitude of the postsynaptic current ``J`` corresponds to the
-    synaptic weight ``PSC``.
+    The amplitude of the postsynaptic current ``J`` corresponds to the synaptic weight ``PSC``.
 
     References
     ----------
     .. [1] Hanuschkin A, Kunkel S, Helias M, Morrison A and Diesmann M (2010)
-           A general and efficient method for incorporating precise spike times
-           in globally time-driven simulations.
-           Front. Neuroinform. 4:113.
-           DOI: `10.3389/fninf.2010.00113 <https://doi.org/10.3389/fninf.2010.00113>`__.
+           A general and efficient method for incorporating precise spike times in globally time-driven simulations.
+           Front. Neuroinform. 4:113. DOI:
+           `10.3389/fninf.2010.00113 <https://doi.org/10.3389/fninf.2010.00113>`__.
 
     Parameters
     ----------
@@ -169,8 +155,7 @@ def postsynaptic_potential_to_current(C_m, tau_m, tau_syn):
     Returns
     -------
     PSC_over_PSP
-        Conversion factor to be multiplied to a `PSP` (in mV) to obtain a `PSC`
-        (in pA).
+        Conversion factor to be multiplied to a `PSP` (in mV) to obtain a `PSC` (in pA).
     """
 
     sub = 1.0 / (tau_syn - tau_m)
@@ -227,9 +212,8 @@ def adjust_weights_and_input_to_synapse_scaling(
 ):
     """Adjusts weights and external input to scaling of indegrees.
 
-    The recurrent and external weights are adjusted to the scaling
-    of the indegrees. Extra DC input is added to compensate for the
-    scaling in order to preserve the mean and variance of the input.
+    The recurrent and external weights are adjusted to the scaling of the indegrees.
+    Extra DC input is added to compensate for the scaling in order to preserve the mean and variance of the input.
 
     Parameters
     ----------
@@ -273,9 +257,8 @@ def adjust_weights_and_input_to_synapse_scaling(
 
     # recurrent input of full network
     indegree_matrix = full_num_synapses / full_num_neurons[:, np.newaxis]
-    input_rec = np.sum(
-        mean_PSC_matrix * indegree_matrix * full_mean_rates, axis=1
-    )  # local input currents in full scale network
+    # local input currents in full scale network
+    input_rec = np.sum(mean_PSC_matrix * indegree_matrix * full_mean_rates, axis=1)
 
     DC_amp_new = DC_amp + 0.001 * tau_syn * (1.0 - np.sqrt(K_scaling)) * input_rec
 
@@ -290,9 +273,10 @@ def adjust_weights_and_input_to_synapse_scaling(
 
 
 def compute_rheo_base_current(V_th, V_rest, C_m, tau_m):
-    """Computes the rheobase current for a given threshold voltage, resting potential, membrane capacitance, and membrane time constant.
+    """Computes the rheobase current.
 
     The rheobase current is the minimum current required to bring the membrane potential to the threshold voltage.
+    It is computed for a given threshold voltage, resting potential, membrane capacitance, and membrane time constant.
 
     Parameters
     ----------
@@ -350,9 +334,7 @@ def plot_raster(path, name, begin, end, N_scaling):
     last_node_id = node_ids[-1, -1]
     mod_node_ids = np.abs(node_ids - last_node_id) + 1
 
-    label_pos = [
-        (mod_node_ids[i, 0] + mod_node_ids[i + 1, 1]) / 2.0 for i in np.arange(0, 8, 2)
-    ]
+    label_pos = [(mod_node_ids[i, 0] + mod_node_ids[i + 1, 1]) / 2.0 for i in np.arange(0, 8, 2)]
 
     ######################
     from matplotlib import rcParams
@@ -386,9 +368,7 @@ def plot_raster(path, name, begin, end, N_scaling):
         neurons = np.abs(data[i]["sender"] - last_node_id) + 1
         all_neurons += list(neurons)
         if i % 2 == 0:
-            plt.hlines(
-                mod_node_ids[i, 0], begin, end, color="0.8", ls="-", lw=1, zorder=0
-            )
+            plt.hlines(mod_node_ids[i, 0], begin, end, color="0.8", ls="-", lw=1, zorder=0)
         plt.plot(
             times[::stp],
             neurons[::stp],
@@ -459,8 +439,8 @@ def firing_rates(path, name, begin, end):
 def boxplot_firing_rates(path, populations):
     """Creates a boxblot of the firing rates of all populations.
 
-    To create the boxplot, the firing rates of each neuron in each population
-    need to be computed with the function ``firing_rates()``.
+    To create the boxplot, the firing rates of each neuron in each population need to be computed
+    with the function ``firing_rates()``.
 
     Parameters
     -----------
@@ -483,9 +463,7 @@ def boxplot_firing_rates(path, populations):
 
     rates_per_neuron_rev = []
     for i in np.arange(len(populations))[::-1]:
-        rates_per_neuron_rev.append(
-            np.loadtxt(Path(path) / f"rate{i}.dat")
-        )
+        rates_per_neuron_rev.append(np.loadtxt(Path(path) / f"rate{i}.dat"))
 
     ######################
     from matplotlib import rcParams
@@ -546,11 +524,10 @@ def boxplot_firing_rates(path, populations):
 
 
 def _gather_metadata(path, name):
-    """Reads names and ids of spike recorders and first and last ids of
-    neurons in each population.
+    """Reads names and ids of spike recorders and first and last ids of neurons in each population.
 
-    If the simulation was run on several threads or MPI-processes, one name per
-    spike recorder per MPI-process/thread is extracted.
+    If the simulation was run on several threads or MPI-processes, one name per spike recorder per
+    MPI-process/thread is extracted.
 
     Parameters
     ------------
@@ -609,15 +586,12 @@ def _load_spike_times(path, name, begin, end):
     Returns
     -------
     data
-        Dictionary containing spike times in the interval from ``begin``
-        to ``end``.
+        Dictionary containing spike times in the interval from ``begin`` to ``end``.
     """
 
     sd_files, sd_names, node_ids = _gather_metadata(path, name)
     data = {}
-    dtype = np.dtype(
-        {"names": ("sender", "time_ms"), "formats": ("i4", "f8")}
-    )  # as in header
+    dtype = np.dtype({"names": ("sender", "time_ms"), "formats": ("i4", "f8")})  # as in header
     for i, name in enumerate(sd_names):
         data_i_raw = np.array([[]], dtype=dtype)
         for j, f in enumerate(sd_files):
@@ -684,26 +658,27 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
                     Spike file label (file name root).
 
     time_interval:  None (default) or tuple (optional)
-                    Start and stop of observation interval (ms). All spikes outside this interval are discarded.
-                    If None, all recorded spikes are loaded.
+                    Start and stop of observation interval (ms). All spikes outside this interval
+                    are discarded. If None, all recorded spikes are loaded.
 
     pop:            None (default), list, or nest.NodeCollection (optional)
-                    Oberserved neuron population. All spike senders that are not part of this population are discarded.
-                    If None, all recorded spikes are loaded.
+                    Oberserved neuron population. All spike senders that are not part of this
+                    population are discarded. If None, all recorded spikes are loaded.
 
     skip_rows:      int (optional)
-                    Number of rows to be skipped while reading spike files (to remove file headers). The default is 3.
+                    Number of rows to be skipped while reading spike
+                    files (to remove file headers). The default is 3.
 
     Returns
     -------
     spikes:   numpy.ndarray
-              Lx2 array of spike senders spikes[:,0] and spike times spikes[:,1] (L = number of spikes).
+              Lx2 array of spike senders spikes[:,0] and
+              spike times spikes[:,1] (L = number of spikes).
     """
 
     if type(time_interval) == tuple:
         print(
-            f"Loading spike data in interval ({time_interval[0]:.1f} ms, "
-            f"{time_interval[1]:.1f} ms] ..."
+            f"Loading spike data in interval ({time_interval[0]:.1f} ms, {time_interval[1]:.1f} ms] ..."
         )
     else:
         print("Loading spike data...")
@@ -714,19 +689,18 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
     spikes = []
     for file_name in files:
         try:
-            buf = np.loadtxt(
-                Path(path) / file_name, skiprows=skip_rows
-            )  ## load spike file while skipping the header
+            ## load spike file while skipping the header
+            buf = np.loadtxt(Path(path) / file_name, skiprows=skip_rows)
             if buf.shape[0] > 0:
+                ## needs to be reshaped to 2-dimensional array in case there is only a single row
                 if buf.shape == (2,):
-                    buf = np.reshape(
-                        buf, (1, 2)
-                    )  ## needs to be reshaped to 2-dimensional array in case there is only a single row
+                    buf = np.reshape(buf, (1, 2))
                 spikes += [buf]
         except:
             print(f"Error: {sys.exc_info()[1]}")
             print(
-                f'Remove non-numeric entries from file {file_name} (e.g. in file header) by specifying (optional) parameter "skip_rows".\n'
+                f"Remove non-numeric entries from file {file_name} (e.g. in file header) by "
+                'specifying (optional) parameter "skip_rows".\n'
             )
 
     if len(spikes) > 1:
@@ -746,14 +720,10 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
         ## extract spikes in specified time interval
         if time_interval != None:
             if type(time_interval) == tuple:
-                ind = (spikes[:, 1] >= time_interval[0]) * (
-                    spikes[:, 1] <= time_interval[1]
-                )
+                ind = (spikes[:, 1] >= time_interval[0]) * (spikes[:, 1] <= time_interval[1])
                 spikes = spikes[ind, :]
             else:
-                print(
-                    "Warning: time_interval must be a tuple or None. All spikes are loaded."
-                )
+                print("Warning: time_interval must be a tuple or None. All spikes are loaded.")
 
         if type(pop) == nest.NodeCollection or type(pop) == list:
             spikes_subset = []
@@ -770,7 +740,8 @@ def load_spike_data(path, label, time_interval=None, pop=None, skip_rows=3):
             pass
         else:
             print(
-                "Warning: pop must be a list, a NEST NodeCollection, or None. All spikes are loaded."
+                "Warning: pop must be a list, a NEST "
+                "NodeCollection, or None. All spikes are loaded."
             )
         print()
 
@@ -877,8 +848,8 @@ def truncate_spike_data(spikes, interval):
 
 def time_averaged_single_neuron_firing_rates(spikes, pop, interval):
     """
-    Computes single-neuron firing rates for a specified population of neurons,
-    averaged across a speficied time interval.
+    Computes single-neuron firing rates for a specified population
+    of neurons, averaged across a speficied time interval.
 
     Parameters:
     -----------
@@ -916,8 +887,8 @@ def time_averaged_single_neuron_firing_rates(spikes, pop, interval):
 
 def single_neuron_isi_cvs(spikes, pop, interval):
     """
-    Computes coefficient of variation (CV) of inter-spike intervals (ISIs)
-    for each neuron in the specified population within a given observation time interval.
+    Computes coefficient of variation (CV) of inter-spike intervals (ISIs) for each neuron in the
+    specified population within a given observation time interval.
 
     Parameters:
     -----------
@@ -1032,7 +1003,8 @@ def pairwise_spike_count_correlations(spikes, pop, interval, binsize):
     Returns:
     --------
     ccs:                   numpy.ndarray
-                           Array of spike-count correlation coefficients for all pairs of neurons in specified population.
+                           Array of spike-count correlation coefficients for
+                           all pairs of neurons in specified population.
     """
 
     assert type(spikes) == dict
@@ -1066,7 +1038,8 @@ def data_distribution(data, label, unit="", hist_bin=None):
     """
     Calculates distribution (histogram) of a given data array, and basic statistics.
 
-    If data is empty or contains only NaNs, the resulting histogram is set to zero for all bins and a warning is raised.
+    If data is empty or contains only NaNs, the resulting
+    histogram is set to zero for all bins and a warning is raised.
 
     Parameters:
     -----------
@@ -1080,8 +1053,7 @@ def data_distribution(data, label, unit="", hist_bin=None):
                Data unit.
 
     hist_bin   None or float
-               Bin width for calculation of histogram.
-               None (default): Use Doane estimator.
+               Bin width for calculation of histogram. None (default): Use Doane estimator.
 
     Returns:
     --------
@@ -1100,9 +1072,7 @@ def data_distribution(data, label, unit="", hist_bin=None):
 
     nans = np.isnan(data)
     if all(nans):
-        print(
-            "WARNING: Data contains only NaNs. Histogram is set to zero for all bins."
-        )
+        print("WARNING: Data contains only NaNs. Histogram is set to zero for all bins.")
         # return np.zeros(len(data)), np.zeros(len(data)), {
         #'sample_size': 0,
         #'mean': np.nan,
@@ -1113,9 +1083,7 @@ def data_distribution(data, label, unit="", hist_bin=None):
         # }
         return None, None, None
     else:
-        print(
-            f"WARNING: Data contains {sum(nans)} NaNs. These are ignored in the statistics."
-        )
+        print(f"WARNING: Data contains {sum(nans)} NaNs. These are ignored in the statistics.")
         data = np.delete(data, np.where(nans))
 
     stat = {}
@@ -1146,9 +1114,7 @@ def data_distribution(data, label, unit="", hist_bin=None):
     else:
         if isinstance(hist_bin, (int, float)):
             if hist_bin > 0:
-                bins = np.arange(
-                    stat["min"] - hist_bin, stat["max"] + 1.1 * hist_bin, hist_bin
-                )
+                bins = np.arange(stat["min"] - hist_bin, stat["max"] + 1.1 * hist_bin, hist_bin)
             else:
                 bins = np.array([0, stat["min"], 2 * stat["min"]])
         elif isinstance(hist_bin, (list, np.ndarray)):

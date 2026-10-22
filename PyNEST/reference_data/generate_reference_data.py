@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-'''
+"""
 Generation of reference data for the microcircuit model.
-'''
+"""
 
 #####################
 import time
@@ -40,20 +40,21 @@ params.rng_seed = args.seed
 #####################
 
 ## set network scale
-scaling_factor = ref_dict['scaling_factor']
+scaling_factor = ref_dict["scaling_factor"]
 params.N_scaling = scaling_factor
 params.K_scaling = scaling_factor
 
 ## set pre-simulation time to 0 and desired simulation time
 params.t_presim = ref_dict["t_presim"]
-params.t_sim = ref_dict["t_sim"] # simulate for 10.0s
+params.t_sim = ref_dict["t_sim"]  # simulate for 10.0s
 
 ## set number of local number of threads
-params.local_num_threads = ref_dict['local_num_threads']
+params.local_num_threads = ref_dict["local_num_threads"]
+
 
 def main():
 
-    ## start timer 
+    ## start timer
     time_start = time.time()
 
     ## create instance of the model
@@ -78,18 +79,19 @@ def main():
 
     ## current memory consumption of the python process (in MB)
     import psutil
+
     mem = psutil.Process().memory_info().rss / (1024 * 1024)
-    #TODO store benchmark data in store_metadata
-    #net.benchmark_data = {}
-    #net.benchmark_data['memory'] = mem
+    # TODO store benchmark data in store_metadata
+    # net.benchmark_data = {}
+    # net.benchmark_data['memory'] = mem
 
     #####################
     ## plot spikes and firing rate distribution
     print()
-    print('##########################################')
+    print("##########################################")
     print()
     observation_interval = np.array([params.t_presim, params.t_presim + params.t_sim])
-    model.evaluate(observation_interval , observation_interval )
+    model.evaluate(observation_interval, observation_interval)
     print()
     print(f'Raster plot                  : see {params.data_path / "raster_plot.png"} ')
     print(f'Distributions of firing rates: see {params.data_path / "box_plot.png"} ')
@@ -99,25 +101,26 @@ def main():
     ## print timers and memory consumption
 
     print()
-    print('##########################################')
+    print("##########################################")
     print()
-    print(f'Times of Rank {nest.Rank()}:')
-    print('    Total time:')
-    print(f'    Time to initialize  : {time_network - time_start:.3f}s')
-    print(f'    Time to create      : {time_create - time_network:.3f}s')
-    print(f'    Time to connect     : {time_connect - time_create:.3f}s')
-    print(f'    Time to presimulate : {time_presimulate - time_connect:.3f}s')
-    print(f'    Time to simulate    : {time_simulate - time_presimulate:.3f}s')
-    print(f'    Time to evaluate    : {time_evaluate - time_simulate:.3f}s')
+    print(f"Times of Rank {nest.Rank()}:")
+    print("    Total time:")
+    print(f"    Time to initialize  : {time_network - time_start:.3f}s")
+    print(f"    Time to create      : {time_create - time_network:.3f}s")
+    print(f"    Time to connect     : {time_connect - time_create:.3f}s")
+    print(f"    Time to presimulate : {time_presimulate - time_connect:.3f}s")
+    print(f"    Time to simulate    : {time_simulate - time_presimulate:.3f}s")
+    print(f"    Time to evaluate    : {time_evaluate - time_simulate:.3f}s")
     print()
     print(f"Memory consumption: {int(mem)}MB")
     print()
-    print('##########################################')
+    print("##########################################")
     print()
 
     model.store_metadata()
-    
+
+
 #####################
 
-if __name__== '__main__':
+if __name__ == "__main__":
     main()

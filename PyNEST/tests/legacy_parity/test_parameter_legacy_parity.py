@@ -6,34 +6,30 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-"""Numerical parity checks between the `Parameters` computed fields and the
-legacy dict-based derivation logic (formerly `Network.__derive_parameters()`
-in `network.py`, before that module was renamed to `model.py`).
+"""Numerical parity checks between `Parameters` computed fields and the legacy derivation.
 
-`network_params.py` and `stimulus_params.py` in this directory are the
-original legacy dict-based parameter files. They've been moved out of the
-shipped `microcircuit` package (they have no other purpose any more) and
-live here, next to the one test that still needs them, so that pytest's
-default import mode picks them up as plain sibling modules -- no package
-`__init__.py`, no `microcircuit.` prefix.
+The legacy dict-based derivation logic was formerly `Network.__derive_parameters()` in `network.py`,
+before that module was renamed to `model.py`.
+
+`network_params.py` and `stimulus_params.py` in this directory are the original
+legacy dict-based parameter files. They've been moved out of the shipped
+`microcircuit` package (they have no other purpose any more) and live here, next to
+the one test that still needs them, so that pytest's default import mode picks them
+up as plain sibling modules -- no package `__init__.py`, no `microcircuit.` prefix.
 
 `_legacy_derive_parameters()` below is a frozen re-implementation of
-`Network.__derive_parameters()` against those dicts. It does NOT call into `microcircuit.helpers` for its
-sub-calculations (`num_synapses_from_conn_probs`,
-`postsynaptic_potential_to_current`, `dc_input_compensating_poisson`,
-`adjust_weights_and_input_to_synapse_scaling`) -- those are frozen locally
-below (`_legacy_*`) too. `helpers.py` is live, shared code that both this
-test and the current `Parameters` computed fields depend on; if it called
-into the live module, a regression introduced inside `helpers.py` itself
-would be invisible here, since both sides of the comparison would go
-through the same (possibly broken) implementation. This bit us once
-already: an errant `.astype(int)` inside the live
-`num_synapses_from_conn_probs` truncated an intermediate float before
-scaling, shifting connection counts for 4 of 64 population pairs at
-non-default scaling -- and this test still passed, because both sides used
-the same buggy helper. Keep these frozen copies in sync with the actual
-math `main`'s legacy `Network.__derive_parameters()` used, not with
-whatever `helpers.py` currently does.
+`Network.__derive_parameters()` against those dicts. It does NOT call into `microcircuit.helpers`
+for its sub-calculations (`num_synapses_from_conn_probs`, `postsynaptic_potential_to_current`,
+`dc_input_compensating_poisson`, `adjust_weights_and_input_to_synapse_scaling`) -- those are
+frozen locally below (`_legacy_*`) too. `helpers.py` is live, shared code that both this test and
+the current `Parameters` computed fields depend on; if it called into the live module, a
+regression introduced inside `helpers.py` itself would be invisible here, since both sides of the
+comparison would go through the same (possibly broken) implementation. This bit us once already:
+an errant `.astype(int)` inside the live `num_synapses_from_conn_probs` truncated an intermediate
+float before scaling, shifting connection counts for 4 of 64 population pairs at non-default
+scaling -- and this test still passed, because both sides used the same buggy helper. Keep these
+frozen copies in sync with the actual math `main`'s legacy `Network.__derive_parameters()` used,
+not with whatever `helpers.py` currently does.
 """
 
 import copy

@@ -343,9 +343,7 @@ def test_stimulus_stop_times_default():
     params = Parameters()
 
     assert params.th_stop == params.th_start + params.th_duration
-    assert (
-        params.dc_transient_stop == params.dc_transient_start + params.dc_transient_dur
-    )
+    assert params.dc_transient_stop == params.dc_transient_start + params.dc_transient_dur
     assert params.th_stop == 710.0
     assert params.dc_transient_stop == 750.0
 
@@ -357,9 +355,7 @@ def test_stimulus_stop_times_default():
         ("dc_transient_start", "dc_transient_dur", "dc_transient_stop"),
     ],
 )
-def test_stimulus_stop_times_track_primary_parameters(
-    start_field, duration_field, stop_field
-):
+def test_stimulus_stop_times_track_primary_parameters(start_field, duration_field, stop_field):
     params = Parameters()
 
     setattr(params, start_field, 100.0)
@@ -372,10 +368,7 @@ def test_I_CC_default():
     params = Parameters()
 
     assert params.I_CC == pytest.approx(
-        params.rate_CC
-        * (params.weight_exc_mean / params.J_unit)
-        * params.tau_syn
-        * 0.001
+        params.rate_CC * (params.weight_exc_mean / params.J_unit) * params.tau_syn * 0.001
     )
 
 
@@ -392,9 +385,7 @@ def test_I_CC_tracks_primary_parameters(field_name):
 def test_I_CC_populations_scales_with_K_CC_full():
     params = Parameters()
 
-    assert params.I_CC_populations == [
-        pytest.approx(k * params.I_CC) for k in params.K_CC_full
-    ]
+    assert params.I_CC_populations == [pytest.approx(k * params.I_CC) for k in params.K_CC_full]
 
 
 def test_I_CC_populations_tracks_K_CC_full():
@@ -402,9 +393,7 @@ def test_I_CC_populations_tracks_K_CC_full():
 
     params.K_CC_full = [1.0] * len(params.populations)
 
-    assert params.I_CC_populations == [pytest.approx(params.I_CC)] * len(
-        params.populations
-    )
+    assert params.I_CC_populations == [pytest.approx(params.I_CC)] * len(params.populations)
 
 
 def test_num_neurons_rounds_rather_than_truncates():
@@ -588,9 +577,7 @@ def test_subthreshold_populations_flags_when_dc_amp_too_low():
     params.CC_type = "dc"
     params.weight_exc_mean = 1e-6  # collapses PSC_ext/DC_amp toward ~0
 
-    I_rh = helpers.compute_rheo_base_current(
-        params.V_th, params.V_reset, params.C_m, params.tau_m
-    )
+    I_rh = helpers.compute_rheo_base_current(params.V_th, params.V_reset, params.C_m, params.tau_m)
     assert I_rh > 0  # sanity: rheobase is positive with defaults
     assert set(params.subthreshold_populations) == set(params.populations)
 
@@ -600,12 +587,8 @@ def test_PSP_matrix_mean_exc_inh_pattern_and_doubled_entry():
     matrix = params.PSP_matrix_mean
 
     assert matrix[1][0] == pytest.approx(params.weight_exc_mean)  # exc column
-    assert matrix[1][1] == pytest.approx(
-        params.weight_exc_mean * params.g
-    )  # inh column
-    assert matrix[0][2] == pytest.approx(
-        2.0 * params.weight_exc_mean
-    )  # doubled L4E->L2/3E
+    assert matrix[1][1] == pytest.approx(params.weight_exc_mean * params.g)  # inh column
+    assert matrix[0][2] == pytest.approx(2.0 * params.weight_exc_mean)  # doubled L4E->L2/3E
 
 
 @pytest.mark.parametrize("field_name", ["weight_exc_mean", "g"])

@@ -24,8 +24,7 @@
 """PyNEST implementation of microcircuit-PD14-model
 -------------------------------------------------------
 
-Main file of the microcircuit defining the ``Model`` class with functions to
-build and simulate the network.
+Main file of the microcircuit defining the ``Model`` class with functions to build and simulate the network.
 """
 
 import os
@@ -41,13 +40,12 @@ class Model:
     """
     Model class for the microcircuit.
 
-    Model instances are equipped with model parameters given by an instance of
-    the `Parameters` class (see: `parameter_definitions.py`), as well as with
-    functions to create and connect the network, to simulate the model, and to
-    evaluate the resulting spike data.
+    Model instances are equipped with model parameters given by an instance of the `Parameters` class
+    (see: `parameter_definitions.py`), as well as with functions to create and connect the network, to simulate the model,
+    and to evaluate the resulting spike data.
 
-    Instantiating a Model object initializes the NEST kernel; all derived
-    parameters are available as computed fields on `params`.
+    Instantiating a Model object initializes the NEST kernel;
+    all derived parameters are available as computed fields on `params`.
 
     Parameters
     ----------
@@ -83,10 +81,9 @@ class Model:
     def connect(self):
         """Connects the network.
 
-        Recurrent connections among neurons of the neuronal populations are
-        established, and recording and stimulation devices are connected.
-        This also triggers the construction of the presynaptic connection
-        infrastructure.
+        Recurrent connections among neurons of the neuronal populations are established,
+        and recording and stimulation devices are connected.
+        This also triggers the construction of the presynaptic connection infrastructure.
         """
 
         self._connect_neuronal_populations()
@@ -100,9 +97,8 @@ class Model:
         if self.params.thalamic_input:
             self._connect_thalamic_stim_input()
 
-        # trigger construction of the presynaptic connection infrastructure
-        # here, so that it counts as part of connecting rather than of the
-        # first nest.Simulate() call
+        # trigger construction of the presynaptic connection infrastructure here,
+        # so that it counts as part of connecting rather than of the first nest.Simulate() call
         nest.Prepare()
         nest.Cleanup()
 
@@ -120,10 +116,10 @@ class Model:
         print("####################################################################")
         print()
 
-        ### parameters (primary + derived, in one snapshot)
+        # parameters (primary + derived, in one snapshot)
         helpers.dict2json(self.params.model_dump(), self.params.data_path / "params.json")
 
-        ### nodes (populations, readout neurons, recording/stimulus devices)
+        # nodes (populations, readout neurons, recording/stimulus devices)
         nodes = {}
         for i, pop in enumerate(self.pops):
             pop_name = self.params.populations[i]
@@ -136,10 +132,10 @@ class Model:
 
         helpers.dict2json(nodes, self.params.data_path / "nodes.json")
 
-        ### python packages and versions
+        # python packages and versions
         os.system(f"pip freeze > {self.params.data_path / 'requirements.txt'}")
 
-        ### store system metadata
+        # store system metadata
         # os.system('cd %s; gathermetadata system_metadata' % self.params.data_path)
 
     def simulate(self, t_sim):
@@ -157,19 +153,16 @@ class Model:
 
     def evaluate(self, raster_plot_interval, firing_rates_interval):
         """Displays simulation results.
-
         Creates a spike raster plot.
-        Calculates the firing rate of each population and displays them as a
-        box plot.
+        Calculates the firing rate of each population and displays them as a box plot.
 
         Parameters
         ----------
         raster_plot_interval
-            Times (in ms) to start and stop loading spike times for raster plot
-            (included).
+            Times (in ms) to start and stop loading spike times for raster plot (included).
         firing_rates_interval
-            Times (in ms) to start and stop loading spike times for computing
-            firing rates (included).
+            Times (in ms) to start and stop loading spike
+            times for computing firing rates (included).
 
         Returns
         -------
@@ -237,9 +230,9 @@ class Model:
     def _create_neuronal_populations(self):
         """Creates the neuronal populations.
 
-        The neuronal populations are created and the parameters are assigned
-        to them. The initial membrane potential of the neurons is drawn from
-        normal distributions dependent on the parameter ``V0_type``.
+        The neuronal populations are created and the parameters are assigned to them.
+        The initial membrane potential of the neurons is drawn from normal distributions
+        dependent on the parameter ``V0_type``.
 
         The first and last neuron id of each population is written to file.
         """
@@ -259,19 +252,23 @@ class Model:
                 "t_ref": self.params.tau_ref,
                 "I_e": self.params.DC_amp[i],
             }
-            
+
             if self.params.V0_type == "optimized":
                 pop_params["V_m"] = nest.random.normal(
-                        self.params.V0_mean_optimized[i],
-                        self.params.V0_std_optimized[i],
-                    )
+                    self.params.V0_mean_optimized[i],
+                    self.params.V0_std_optimized[i],
+                )
             else:
                 pop_params["V_m"] = nest.random.normal(
-                        self.params.V0_mean_original,
-                        self.params.V0_std_original,
-                    )
+                    self.params.V0_mean_original,
+                    self.params.V0_std_original,
+                )
 
-            population = nest.Create(self.params.neuron_model, n=self.params.num_neurons[i], params=pop_params)
+            population = nest.Create(
+                self.params.neuron_model,
+                n=self.params.num_neurons[i],
+                params=pop_params,
+            )
 
             self.pops.append(population)
 
@@ -315,45 +312,49 @@ class Model:
                 "record_from": ["V_m"],
                 "label": str(self.params.data_path / "voltmeter"),
             }
-            self.voltmeters = nest.Create(
-                "voltmeter", n=self.params.num_pops, params=vm_params
-            )
+            self.voltmeters = nest.Create("voltmeter", n=self.params.num_pops, params=vm_params)
 
     def _create_poisson_bg_input(self):
-        """Creates the Poisson generators for ongoing background input if ``params.CC_type`` is ``"poisson"``.
+        """Creates the Poisson generators for ongoing background input.
 
-        If ``CC_type`` is ``"dc"`` instead, DC input is applied for compensation in ``_create_neuronal_populations()``.
+        Used if ``params.CC_type`` is ``"poisson"``. If ``CC_type`` is ``"dc"`` instead,
+        DC input is applied for compensation in ``_create_neuronal_populations()``.
         """
 
         helpers.message("Creating Poisson generators for background input.")
 
-        self.poisson_bg_input = nest.Create("poisson_generator", n=self.params.num_pops,
-                                            params={"rate": (np.array(self.params.K_CC) * self.params.rate_CC).tolist()})
+        self.poisson_bg_input = nest.Create(
+            "poisson_generator",
+            n=self.params.num_pops,
+            params={"rate": (np.array(self.params.K_CC) * self.params.rate_CC).tolist()},
+        )
 
     def _create_thalamic_stim_input(self):
         """Creates the thalamic neuronal population if specified in ``params``.
 
-        Each neuron of the thalamic population is supposed to transmit the same
-        Poisson spike train to all of its targets in the cortical neuronal population,
-        and spike trains elicited by different thalamic neurons should be statistically
-        independent.
-        In NEST, this is achieved with a single Poisson generator connected to all
-        thalamic neurons which are of type ``parrot_neuron``;
-        Poisson generators send independent spike trains to each of their targets and
-        parrot neurons just repeat incoming spikes.
+        Each neuron of the thalamic population is supposed to transmit the same Poisson spike train
+        to all of its targets in the cortical neuronal population, and spike trains elicited by
+        different thalamic neurons should be statistically independent. In NEST, this is achieved
+        with a single Poisson generator connected to all thalamic neurons which are of type
+        ``parrot_neuron``; Poisson generators send independent spike trains to each of their targets
+        and parrot neurons just repeat incoming spikes.
 
-        Note that the number of thalamic neurons is not scaled with
-        ``N_scaling``.
+        Note that the number of thalamic neurons is not scaled with ``N_scaling``.
         """
 
         helpers.message("Creating thalamic input for external stimulation.")
 
         self.thalamic_population = nest.Create("parrot_neuron", n=self.params.num_th_neurons)
 
-        self.poisson_th = nest.Create("poisson_generator", n=1, params={
-            "rate": self.params.th_rate,
-                        "start": self.params.th_start,
-                        "stop": self.params.th_start + self.params.th_duration})
+        self.poisson_th = nest.Create(
+            "poisson_generator",
+            n=1,
+            params={
+                "rate": self.params.th_rate,
+                "start": self.params.th_start,
+                "stop": self.params.th_start + self.params.th_duration,
+            },
+        )
 
     def _create_dc_stim_input(self):
         """Creates DC generators for external stimulation if specified in ``params``.
@@ -370,9 +371,7 @@ class Model:
             "start": self.params.dc_transient_start,
             "stop": self.params.dc_transient_start + self.params.dc_transient_dur,
         }
-        self.dc_stim_input = nest.Create(
-            "dc_generator", n=self.params.num_pops, params=dc_params
-        )
+        self.dc_stim_input = nest.Create("dc_generator", n=self.params.num_pops, params=dc_params)
 
     def _connect_neuronal_populations(self):
         """Creates the recurrent connections between neuronal populations."""
