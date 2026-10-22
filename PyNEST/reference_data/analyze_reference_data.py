@@ -24,32 +24,26 @@ from microcircuit import helpers
 ## import parameter class
 from microcircuit.parameter_definitions import Parameters
 
-## import analysis parameters
-from params import params as ref_dict
-
 from pathlib import Path
 from argparse import ArgumentParser
+from ruamel.yaml import YAML
 
 parser = ArgumentParser()
 parser.add_argument("--seed", type=int, default=12345)
 parser.add_argument("--path", type=str, default="data")
 args = parser.parse_args()
 
-path = Path(args.path)
-params = Parameters()
-params.data_path = path
-params.rng_seed = args.seed
+## load model parameters and analysis settings
+params = Parameters.from_yaml(
+    Path(__file__).parent / "model_params.yaml", data_path=Path(args.path), rng_seed=args.seed
+)
+ref_dict = YAML(typ="safe").load(Path(__file__).parent / "reference_params.yaml")
 
 #####################
 populations = params.populations  # list of populations
 #####################
 
-## set network scale
-scaling_factor = ref_dict["scaling_factor"]
-params.N_scaling = scaling_factor
-params.K_scaling = scaling_factor
-
-random.seed(ref_dict["seed_subsampling"])  # set seed for reproducibility
+random.seed(ref_dict["analysis"]["seed_subsampling"])  # set seed for reproducibility
 
 ####################################################################################################
 #                       Define auxiliary functions to analyze and plot data                        #
@@ -79,8 +73,8 @@ def analyze_single_neuron_stats(observable_name: str, func: callable) -> dict:
 
     observable = {}  # list of single neuron observable [pop][neuron]
     recording_interval = (
-        max(ref_dict["t_min"], ref_dict["t_presim"]),
-        ref_dict["t_presim"] + ref_dict["t_sim"],
+        max(ref_dict["analysis"]["t_min"], params.t_presim),
+        params.t_presim + params.t_sim,
     )
 
     data_path = Path(params.data_path)
@@ -121,8 +115,8 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
     """
 
     recording_interval = (
-        max(ref_dict["t_min"], ref_dict["t_presim"]),
-        ref_dict["t_presim"] + ref_dict["t_sim"],
+        max(ref_dict["analysis"]["t_min"], params.t_presim),
+        params.t_presim + params.t_sim,
     )
 
     # cc_binsize = 2. # in ms
@@ -141,11 +135,11 @@ def analyze_pairwise_stats(observable_name: str, func: callable) -> dict:
 
         # Generate random subsample of neuron nodes for the population for pairwise analysis
         # (without replacement)
-        selected_nodes = random.sample(pop_nodes, ref_dict["subsample_size"])
+        selected_nodes = random.sample(pop_nodes, ref_dict["analysis"]["subsample_size"])
 
         # compute pairwise statistic
         observable[pop] = list(
-            func(spikes, selected_nodes, recording_interval, ref_dict["binsize"])
+            func(spikes, selected_nodes, recording_interval, ref_dict["analysis"]["binsize"])
         )
 
     # store observable as json file

@@ -20,6 +20,7 @@ from scipy.stats import ks_2samp as ks
 import matplotlib.pyplot as plt
 import random
 from pathlib import Path
+from ruamel.yaml import YAML
 
 ## import model implementation
 from microcircuit import helpers
@@ -27,20 +28,15 @@ from microcircuit import helpers
 ## import parameter class
 from microcircuit.parameter_definitions import Parameters
 
-## import analysis parameters
-from params import params as ref_dict
+## load model parameters and plotting settings
+params = Parameters.from_yaml(Path(__file__).parent / "model_params.yaml")
+ref_dict = YAML(typ="safe").load(Path(__file__).parent / "reference_params.yaml")
 
 #####################
-params = Parameters()
 populations = params.populations  # list of populations
 #####################
 
-## set network scale
-scaling_factor = ref_dict["scaling_factor"]
-params.N_scaling = scaling_factor
-params.K_scaling = scaling_factor
-
-params.data_path = Path(ref_dict["data_path"]) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
+params.data_path = Path(ref_dict["data_path"]) / f"data_T{int(params.t_sim * 1.0e-3)}s"
 
 ## set path for storing spike data and figures
 seeds = ref_dict["RNG_seeds"]  # list of seeds
@@ -243,8 +239,8 @@ def plot_data_dists(
     from matplotlib import rcParams
 
     rcParams["figure.figsize"] = (
-        ref_dict["max_fig_width"] / 3.0,
-        (4.0 / 9.0) * ref_dict["max_fig_width"],
+        ref_dict["plotting"]["max_fig_width"] / 3.0,
+        (4.0 / 9.0) * ref_dict["plotting"]["max_fig_width"],
     )
     rcParams["figure.dpi"] = 300
     rcParams["font.family"] = "sans-serif"
@@ -416,12 +412,12 @@ def plot_data_dists(
 
     # save figures for README.md
     fig_hist.savefig(
-        f"figures/{observable_name}_distributions_T{int(ref_dict['t_sim'] * 1.0e-3)}s.png",
+        f"figures/{observable_name}_distributions_T{int(params.t_sim * 1.0e-3)}s.png",
         bbox_inches="tight",
         pad_inches=0.02,
     )
     fig_ks.savefig(
-        f"figures/{observable_name}_KS_distances_T{int(ref_dict['t_sim'] * 1.0e-3)}s.png",
+        f"figures/{observable_name}_KS_distances_T{int(params.t_sim * 1.0e-3)}s.png",
         bbox_inches="tight",
         pad_inches=0.02,
     )
@@ -443,21 +439,21 @@ def main():
     rate_hist_mat, rate_best_bins, rate_stats = compute_data_dist(
         observable=rates,
         observable_name="rate",
-        observable_limits=ref_dict["rate_lim"],
+        observable_limits=ref_dict["plotting"]["rate_lim"],
         units="1/s",
-        bin_size=ref_dict["rate_binsize"],
+        bin_size=ref_dict["plotting"]["rate_binsize"],
     )
     spike_cvs_hist_mat, spike_cvs_best_bins, spike_cvs_stats = compute_data_dist(
         observable=spike_cvs,
         observable_name="spike_cvs",
-        observable_limits=ref_dict["cv_lim"],
-        bin_size=ref_dict["cv_binsize"],
+        observable_limits=ref_dict["plotting"]["cv_lim"],
+        bin_size=ref_dict["plotting"]["cv_binsize"],
     )
     spike_ccs_hist_mat, spike_ccs_best_bins, spike_ccs_stats = compute_data_dist(
         observable=spike_ccs,
         observable_name="spike_ccs",
-        observable_limits=ref_dict["cc_lim"],
-        bin_size=ref_dict["cc_binsize"],
+        observable_limits=ref_dict["plotting"]["cc_lim"],
+        bin_size=ref_dict["plotting"]["cc_binsize"],
     )
 
     # Plot distributions and KS distances
@@ -467,7 +463,7 @@ def main():
         rate_hist_mat,
         rate_best_bins,
         rate_ks_distances,
-        observable_limits=ref_dict["rate_lim"],
+        observable_limits=ref_dict["plotting"]["rate_lim"],
     )
     # plot_data_dists(
     #     'rate',
@@ -475,7 +471,7 @@ def main():
     #     rate_hist_mat,
     #     rate_best_bins,
     #     rate_ks_distances,
-    #     observable_limits=ref_dict['rate_lim'],
+    #     observable_limits=ref_dict['plotting']['rate_lim'],
     # )
     plot_data_dists(
         "spike_cvs",
@@ -483,24 +479,24 @@ def main():
         spike_cvs_hist_mat,
         spike_cvs_best_bins,
         spike_cvs_ks_distances,
-        observable_limits=ref_dict["cv_lim"],
+        observable_limits=ref_dict["plotting"]["cv_lim"],
     )
     plot_data_dists(
         "spike_ccs",
-        f"spike correlation coefficient\n(bin size ${ref_dict['binsize']:.1f}$ ms)",
+        f"spike correlation coefficient\n(bin size ${ref_dict['analysis']['binsize']:.1f}$ ms)",
         spike_ccs_hist_mat,
         spike_ccs_best_bins,
         spike_ccs_ks_distances,
-        observable_limits=ref_dict["cc_lim"],
+        observable_limits=ref_dict["plotting"]["cc_lim"],
     )
     # plot_data_dists(
     #     'spike_ccs',
     #     r'\begin{center} spike correlation coefficient\\(bin size $%.1f$ ms) \end{center}'
-    #     % ref_dict['binsize'],
+    #     % ref_dict['analysis']['binsize'],
     #     spike_ccs_hist_mat,
     #     spike_ccs_best_bins,
     #     spike_ccs_ks_distances,
-    #     observable_limits=ref_dict['cc_lim'],
+    #     observable_limits=ref_dict['plotting']['cc_lim'],
     # )
 
     ## current memory consumption of the python process (in MB)

@@ -11,7 +11,8 @@ Usage:
 python generate_reference_data.py --seed <RNGseed> --path <data_path>
 ```
 
-The script uses the parameters defined in [`params.py`](params.py), which overwrite some of the default parameters in [../src/microcircuit](../src/microcircuit).
+The script uses the model and simulation parameters defined in [`model_params.yaml`](model_params.yaml), which overwrite some of the default parameters in [../src/microcircuit](../src/microcircuit).
+The RNG seeds of the network realizations, the data path, and the parameters of the data analysis and visualization are defined in [`reference_params.yaml`](reference_params.yaml).
 The random number generator seed used to create a realization of the model and the data path can be set via the (optional) command line arguments `<RNGseed>` and `<data_path>`.
   
 ## Data analysis
@@ -30,7 +31,7 @@ python analyze_reference_data.py --seed <RNGseed> --path <data_path>
 ```
 
 The seed for the network realization and the data path are specified by the command line arguments `<RNGseed>` and `<data_path>`.
-The parameters of the data analysis are set in [`params.py`](params.py).
+The parameters of the data analysis are set in [`reference_params.yaml`](reference_params.yaml).
 
 ### Ensemble of network realizations
 

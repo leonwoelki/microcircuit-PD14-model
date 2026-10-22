@@ -1248,8 +1248,8 @@ def load_parameters_from_yaml(filename) -> Parameters:
 def example_params_file() -> Path:
     """
     Returns the path of the small parameter override file shipped with the package
-    (`example_params.yaml`). It scales the network down so that the bundled entry points
-    (`microcircuit run`, the reference data generator) never run the full-scale model by accident.
+    (`example_params.yaml`). It scales the network down so that the command line interface
+    (`microcircuit run`) never runs the full-scale model by accident.
     """
 
     return Path(str(files("microcircuit") / "example_params.yaml"))

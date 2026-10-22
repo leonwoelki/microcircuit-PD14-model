@@ -1,6 +1,5 @@
-# Parameter overrides used by the bundled entry points (`microcircuit run`,
-# `microcircuit show_config`, and the reference data generator) when no `--params`
-# file is given.
+# Parameter overrides used by the command line interface (`microcircuit run` and
+# `microcircuit show_config`) when no `--params` file is given.
 #
 # Only the parameters listed here differ from the defaults defined in
 # `parameter_definitions.py`. The network is scaled down so that the example

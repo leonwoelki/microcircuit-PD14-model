@@ -21,9 +21,6 @@ from microcircuit.model import Model
 ## import parameter class
 from microcircuit.parameter_definitions import Parameters
 
-## import analysis parameters
-from params import params as ref_dict
-
 from pathlib import Path
 from argparse import ArgumentParser
 
@@ -32,24 +29,11 @@ parser.add_argument("--seed", type=int, default=12345)
 parser.add_argument("--path", type=str, default="data")
 args = parser.parse_args()
 
-path = Path(args.path)
-params = Parameters()
-params.data_path = path
-params.rng_seed = args.seed
-
-#####################
-
-## set network scale
-scaling_factor = ref_dict["scaling_factor"]
-params.N_scaling = scaling_factor
-params.K_scaling = scaling_factor
-
-## set pre-simulation time to 0 and desired simulation time
-params.t_presim = ref_dict["t_presim"]
-params.t_sim = ref_dict["t_sim"]  # simulate for 10.0s
-
-## set number of local number of threads
-params.local_num_threads = ref_dict["local_num_threads"]
+## load model parameters (network scale, simulation times, threads) and set the
+## seed and data path of this network realization
+params = Parameters.from_yaml(
+    Path(__file__).parent / "model_params.yaml", data_path=Path(args.path), rng_seed=args.seed
+)
 
 
 def main():

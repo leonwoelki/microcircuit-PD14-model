@@ -20,6 +20,7 @@ import json
 from scipy.stats import ks_2samp as ks
 import random
 from pathlib import Path
+from ruamel.yaml import YAML
 
 ## import model implementation
 from microcircuit import helpers
@@ -27,24 +28,19 @@ from microcircuit import helpers
 ## import parameter class
 from microcircuit.parameter_definitions import Parameters
 
-## import analysis parameters
-from params import params as ref_dict
+## load model parameters and analysis settings
+params = Parameters.from_yaml(Path(__file__).parent / "model_params.yaml")
+ref_dict = YAML(typ="safe").load(Path(__file__).parent / "reference_params.yaml")
 
 #####################
-params = Parameters()
 populations = params.populations  # list of populations
 #####################
 
-## set network scale
-scaling_factor = ref_dict["scaling_factor"]
-params.N_scaling = scaling_factor
-params.K_scaling = scaling_factor
-
-random.seed(ref_dict["seed_subsampling"])  # set seed for reproducibility
+random.seed(ref_dict["analysis"]["seed_subsampling"])  # set seed for reproducibility
 
 seeds = ref_dict["RNG_seeds"]  # list of seeds
 
-params.data_path = Path(ref_dict["data_path"]) / f"data_T{int(ref_dict['t_sim'] * 1.0e-3)}s"
+params.data_path = Path(ref_dict["data_path"]) / f"data_T{int(params.t_sim * 1.0e-3)}s"
 
 
 #######################################################
